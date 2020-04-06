@@ -42,9 +42,24 @@ from cyvcf2 import VCF
 import argparse
 import sys
 import warnings
+import re
 
 def isCoding(v):
-    return True
+    ret=False
+
+    ## snpEff annotation
+    codingFlag=["intragenic_variant", "5_prime_UTR", "3_prime_UTR"]
+    annotInfo=v.INFO.get('ANN').split('|')
+    for pattern in codingFlag:
+        ## Use regexp, insteof of exact matching
+        p=re.compile(pattern)
+        if p.match(annotInfo[1]):
+            print(annotInfo)
+            ret=True
+            break
+
+    return ret
+
 
 def isNonCoding(v):
     return True
@@ -104,9 +119,9 @@ if __name__ == "__main__":
     
     for variant in VCF(args.vcf):
         varCounter+=1
-        if (varCounter % 10 == 0):
-            print ("## ",varCounter)
-            if varCounter == 50:
+        if (varCounter % 100 == 0):
+            #print ("## ",varCounter)
+            if varCounter == 100000:
                 sys.exit()
 
         try:
