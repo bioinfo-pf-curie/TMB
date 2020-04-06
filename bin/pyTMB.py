@@ -40,7 +40,8 @@ Step of the script:
 
 from cyvcf2 import VCF
 import argparse
-
+import sys
+import warnings
 
 def isCoding(v):
     return True
@@ -54,84 +55,128 @@ def isSynonymous(v):
 def isNonSynonymous(v):
     return True
 
-def isHotspot(v):
+def isHotspot(v, databases):
     return True
 
-def isSomatic(v):
-    return True
-
-def isGermline(v):
+def isGermline(v, databases):
     return True
 
 
 def argsParse():
     parser = argparse.ArgumentParser()
-    parser.add_argument("-i", "--input", help="Input file (VCF format)")
-    parser.add_argument("-b", "--bed", help="Capture design (BED file)", default='')
+    parser.add_argument("-i", "--vcf", help="Input file (.vcf, .vcf.gz, .bcf)")
+
+    parser.add_argument("--bed", help="Capture design (BED file)", default=None)
     
     ## Thresholds
-    parser.add_argument("--minAR", help="Select variants with Allelic Ratio > minAR", default='')
-    parser.add_argument("--minMAF", help="Select variants with MAF > minMAF", default='')
-    parser.add_argument("--minDepth", help="Select variants with depth > minDepth", default=5)
+    parser.add_argument("--minVAF", help="Select variants with Allelic Ratio > minAR", type=float, default=0.05)
+    parser.add_argument("--minMAF", help="Select variants with MAF > minMAF", type=float, default=0.001)
+    parser.add_argument("--minDepth", help="Select variants with depth > minDepth", type=int, default=5)
     
-    ## Which variants to use ?
-    parser.add_argument("--useCoding", help="Include Coding variants", default='')
-    parser.add_argument("--useNonCoding", help="Include Non-coding variants", default='')
-    parser.add_argument("--useSyn", help="Include Synonymous variants", default='')
-    parser.add_argument("--useNonSyn", help="Include Non-Synonymous variants", default='')
-    parser.add_argument("--useHotspot", help="Include variants in hotspots", default='')
-    parser.add_argument("--filterGermline", help="Filter potential variants flagged as germline in databases", default='')
+    ## Which variants to use
+    parser.add_argument("--useCoding", help="Include Coding variants", action="store_true")
+    parser.add_argument("--useNonCoding", help="Include Non-coding variants", action="store_true")
+    parser.add_argument("--useSyn", help="Include Synonymous variants", action="store_true")
+    parser.add_argument("--useNonSyn", help="Include Non-Synonymous variants", action="store_true")
+
+    ## Which variants to filter
+    parser.add_argument("--filterHotspot", help="Filter variants in hotspots", action="store_true")
+    parser.add_argument("--filterGermline", help="Filter potential variants flagged as germline in databases", action="store_true")
     
     ## Database
-    parser.add_argument("--germlineDb", help="Databases used for germline annotation", default='')
-    parser.add_argument("--hotspotDb", help="Databases used for hotspot annotation", default='')
+    parser.add_argument("--germlineDb", help="Databases used for germline annotation", default=None)
+    parser.add_argument("--hotspotDb", help="Databases used for hotspot annotation", default=None)
     
     ## Others
-    parser.add_argument("-v", "--version", help="Pipeline version", default='')
+    parser.add_argument("-v", "--version", help="Pipeline version", action="store_true")
     
     args = parser.parse_args()
     return (args)
 
 
 
+
 if __name__ == "__main__":
 
     args = argsParse()
+    varCounter=0
+    varTMB=0
+    
+    for variant in VCF(args.vcf):
+        varCounter+=1
+        if (varCounter % 10 == 0):
+            print ("## ",varCounter)
+            if varCounter == 50:
+                sys.exit()
 
-    for variant in VCF(args.input): # or VCF('some.bcf')
+        try:
+            ## Variant Allele Frequency
+            if variant.INFO.get('AF') < args.minVAF:
+                continue
+                
+            ## Sequencing Depth
+            if variant.INFO.get('DP') < args.minDepth:
+                continue
+                    
+            ## MAF
+                    
+            ## Coding variants
+            if args.useCoding and not isCoding(variant):
+                continue
 
-        if variant.INFO.get('AF') > args.minMAF:
-            continue
+            ## Non-coding variants
+            if args.useNonCoding and not isNonCoding(variant):
+                continue 
 
-        if variant.INFO.get('DP') > args.minDepth:
-            continue
+            ## Synonymous
+            if args.useSyn and not isSynonymous(variant):
+                continue
+            
+            ## Non synonymous
+            if args.useNonSyn and not isNonSynonymous(v):
+                continue
 
+            ## Hotpost
+            if args.filterHotspot and isHotspot(v, args.hotspotDb):
+                continue
+
+            ## Germline
+            if args.filterGermline and isGermline(v, args.germlineDb):
+                continue
+                
+        except:
+            ## TODO - try to catch different cases or at least to print info to check what's going on and where
+            warnings.warn("Warning ...")
+        
 
         ### Usage examples of cyvcf
-        variant.REF, variant.ALT # e.g. REF='A', ALT=['C', 'T']
+        #variant.REF, variant.ALT # e.g. REF='A', ALT=['C', 'T']
 
-        variant.CHROM, variant.start, variant.end, variant.ID, \
-            variant.FILTER, variant.QUAL
+        #variant.CHROM, variant.start, variant.end, variant.ID, \
+        #    variant.FILTER, variant.QUAL
         
         # numpy arrays of specific things we pull from the sample fields.
         # gt_types is array of 0,1,2,3==HOM_REF, HET, UNKNOWN, HOM_ALT
-        variant.gt_types, variant.gt_ref_depths, variant.gt_alt_depths # numpy arrays
-        variant.gt_phases, variant.gt_quals, variant.gt_bases # numpy array
+        #variant.gt_types, variant.gt_ref_depths, variant.gt_alt_depths # numpy arrays
+        #variant.gt_phases, variant.gt_quals, variant.gt_bases # numpy array
     
     
         ## INFO Field.
         ## extract from the info field by it's name:
-        variant.INFO.get('DP') # int
-        variant.INFO.get('FS') # float
-        variant.INFO.get('AC') # float
+        #variant.INFO.get('DP') # int
+        #variant.INFO.get('FS') # float
+        #variant.INFO.get('AC') # float
         
         # convert back to a string.
-        str(variant)
+        #str(variant)
         
         ## per-sample info...
         # Get a numpy array of the depth per sample:
-        dp = variant.format('DP')
+        #dp = variant.format('DP')
         # or of any other format field:
-        sb = variant.format('SB')
-        assert sb.shape == (n_samples, 4) # 4-values per
-        
+        #sb = variant.format('SB')
+        #assert sb.shape == (n_samples, 4) # 4-values per
+
+        ## Still alivie = use this variant for TMB calculation
+        varTMB += 1
+
