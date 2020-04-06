@@ -71,21 +71,20 @@ def argsParse():
     
     ## Thresholds
     parser.add_argument("--minAR", help="Select variants with Allelic Ratio > minAR", default='')
-    parser.add_argument("--minMAF", help="Select variants with MAF > minMAF", default='') 
-    parser.add_argument("--minDepth", help="Select variants with depth > minDepth", default=5) 
+    parser.add_argument("--minMAF", help="Select variants with MAF > minMAF", default='')
+    parser.add_argument("--minDepth", help="Select variants with depth > minDepth", default=5)
     
     ## Which variants to use ?
     parser.add_argument("--useCoding", help="Include Coding variants", default='')
-    parser.add_argument("--useNonCoding", help="Include Non-coding variants", default='') 
-    parser.add_argument("--useSyn", help="Include Synonymous variants", default='') 
-    parser.add_argument("--useNonSyn", help="Include Non-Synonymous variants", default='') 
-    parser.add_argument("--useSomatic", help="Include Somatic variants", default='')
-    parser.add_argument("--useGermline", help="Include Germline variants", default='') 
-    parser.add_argument("--useHotspot", help="Include variants in hotspots", default='') 
+    parser.add_argument("--useNonCoding", help="Include Non-coding variants", default='')
+    parser.add_argument("--useSyn", help="Include Synonymous variants", default='')
+    parser.add_argument("--useNonSyn", help="Include Non-Synonymous variants", default='')
+    parser.add_argument("--useHotspot", help="Include variants in hotspots", default='')
+    parser.add_argument("--filterGermline", help="Filter potential variants flagged as germline in databases", default='')
     
     ## Database
-    parser.add_argument("--somaticDb", help="Database used for somatic annotation", default='') 
-    parser.add_argument("--hotspotDb", help="Database used for hotspot annotation", default='') 
+    parser.add_argument("--germlineDb", help="Databases used for germline annotation", default='')
+    parser.add_argument("--hotspotDb", help="Databases used for hotspot annotation", default='')
     
     ## Others
     parser.add_argument("-v", "--version", help="Pipeline version", default='')
