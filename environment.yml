@@ -6,5 +6,5 @@ channels:
   - conda-forge
   - defaults
 dependencies:
-  - conda-forge::python=3.8.2
+  - conda-forge::python=3.6.10
   - bioconda::cyvcf2=0.11.7

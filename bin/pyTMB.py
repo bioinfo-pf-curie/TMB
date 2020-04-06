@@ -44,33 +44,111 @@ import sys
 import warnings
 import re
 
-def isCoding(v):
+
+"""
+Check if the variant affects the coding sequence
+"""
+def isCoding(v, db="snpEff"):
     ret=False
 
     ## snpEff annotation
-    codingFlag=["intragenic_variant", "5_prime_UTR", "3_prime_UTR"]
-    annotInfo=v.INFO.get('ANN').split('|')
-    for pattern in codingFlag:
-        ## Use regexp, insteof of exact matching
-        p=re.compile(pattern)
-        if p.match(annotInfo[1]):
-            print(annotInfo)
-            ret=True
-            break
+    snpEffFlag=["intragenic_variant", "5_prime_UTR", "3_prime_UTR"]
+    ## ANNOVAR annotation
+    annovarFlag=[]
+
+    if db == "snpEff":
+        flags = snpEffFlag
+    elif db == "annovar":
+        flags = annovarFlag
+
+    annotInfo=v.INFO.get('ANN').split(',')
+    for i in range(0, len(annotInfo)):
+        annot=annotInfo[i].split('|')
+        for pattern in flags:
+            p=re.compile(pattern)
+            if p.match(annot[1]):
+                ret=True
+                break
+        
+    if ret:
+        print("CODING")
 
     return ret
 
 
+"""
+Check if the variant is within a non-coding region
+"""
 def isNonCoding(v):
-    return True
+    ret=False
+    
+    ## snpEff annotation
+    flags=["intergenic_region", "intron_variant", "upstream_gene_variant"]
 
+    annotInfo=v.INFO.get('ANN').split(',')
+    for i in range(0, len(annotInfo)):
+        annot=annotInfo[i].split('|')
+        for pattern in flags:
+            p=re.compile(pattern)
+            if p.match(annot[1]):
+                ret=True
+                break
+
+    if ret:
+        print("NONCODING")
+
+    return ret
+
+
+"""
+Is synonymous variant
+"""
 def isSynonymous(v):
-    return True
+    ret=False
 
+    ## snpEff annotation
+    flags=["synonymous_variant"]
+
+    annotInfo=v.INFO.get('ANN').split(',')
+    for i in range(0, len(annotInfo)):
+        annot=annotInfo[i].split('|')
+        for pattern in flags:
+            p=re.compile(pattern)
+            if p.match(annot[1]):
+                ret=True
+                break
+    if ret:
+        print("SYN")
+
+    return ret
+
+"""
+Is mis-sense variants
+"""
 def isNonSynonymous(v):
-    return True
+    ret=False
+
+    ## snpEff annotation
+    flags=["missense_variant", "initiator_codon_variant", "stop_retained_variant", "stop_gained"]
+
+    annotInfo=v.INFO.get('ANN').split(',')
+    for i in range(0, len(annotInfo)):
+        annot=annotInfo[i].split('|')
+        for pattern in flags:
+            p=re.compile(pattern)
+            if p.match(annot[1]):
+                ret=True
+                break
+    if ret:
+        print("NONSYN")
+
+    return ret
+
 
 def isHotspot(v, databases):
+    print (v.INFO.get('cosmic_coding_ID'))
+    print (v.INFO.get('cosmic_noncoding_ID'))
+
     return True
 
 def isGermline(v, databases):
@@ -99,16 +177,15 @@ def argsParse():
     parser.add_argument("--filterGermline", help="Filter potential variants flagged as germline in databases", action="store_true")
     
     ## Database
-    parser.add_argument("--germlineDb", help="Databases used for germline annotation", default=None)
-    parser.add_argument("--hotspotDb", help="Databases used for hotspot annotation", default=None)
+    parser.add_argument("--germlineDb", help="Databases used for germline annotation", default="gnomAD")
+    parser.add_argument("--hotspotDb", help="Databases used for hotspot annotation", default="cosmic")
     
     ## Others
-    parser.add_argument("-v", "--version", help="Pipeline version", action="store_true")
+    parser.add_argument("-v", "--verbose", help="Active verbose mode", action="store_true")
+    parser.add_argument("--version", help="Pipeline version", action="store_true")
     
     args = parser.parse_args()
     return (args)
-
-
 
 
 if __name__ == "__main__":
@@ -123,6 +200,9 @@ if __name__ == "__main__":
             #print ("## ",varCounter)
             if varCounter == 100000:
                 sys.exit()
+
+        if args.verbose:
+            print (variant.CHROM, variant.start, variant.end, variant.INFO.get("ANN"))
 
         try:
             ## Variant Allele Frequency
