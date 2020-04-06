@@ -46,22 +46,22 @@ parser.add_argument("-i", "--input", help="Input file (VCF format)")
 parser.add_argument("-b", "--bed", help="Capture design (BED file)", default='')
 
 ## Thresholds
-parser.add_argument("-r", "--minAR", help="", default='')
-parser.add_argument("-m", "--minMAF", help="", default='') 
-parser.add_argument("-c", "--minCov", help="", default='') 
+parser.add_argument("-r", "--minAR", help="Select variants with Allelic Ratio > minAR", default='')
+parser.add_argument("-m", "--minMAF", help="Select variants with MAF > minMAF", default='') 
+parser.add_argument("-c", "--minDepth", help="Select variants with depth > minDepth", default='') 
 
 ## Which variants to use ?
-parser.add_argument("-uc", "--useCoding", help="", default='')
-parser.add_argument("-unc", "--useNonCoding", help="", default='') 
-parser.add_argument("-us", "--useSyn", help="", default='') 
-parser.add_argument("-uns", "--useNonSyn", help="", default='') 
-parser.add_argument("-us", "--useSomatic", help="", default='')
-parser.add_argument("-ug", "--useGermline", help="", default='') 
-parser.add_argument("-uh", "--useHotspot", help="", default='') 
+parser.add_argument("-uc", "--useCoding", help="Include Coding variants", default='')
+parser.add_argument("-unc", "--useNonCoding", help="Include Non-coding variants", default='') 
+parser.add_argument("-us", "--useSyn", help="Include Synonymous variants", default='') 
+parser.add_argument("-uns", "--useNonSyn", help="Include Non-Synonymous variants", default='') 
+parser.add_argument("-us", "--useSomatic", help="Include Somatic variants", default='')
+parser.add_argument("-ug", "--useGermline", help="Include Germline variants", default='') 
+parser.add_argument("-uh", "--useHotspot", help="Include variants in hotspots", default='') 
 
 ## Database
-parser.add_argument("-ds", "--somaticDb", help="", default='') 
-parser.add_argument("-dh", "--hotspotDb", help="", default='') 
+parser.add_argument("-ds", "--somaticDb", help="Database used for somatic annotation", default='') 
+parser.add_argument("-dh", "--hotspotDb", help="Database used for hotspot annotation", default='') 
 
 ## Others
 parser.add_argument("-v", "--version", help="Pipeline version", default='')
