@@ -56,20 +56,52 @@ def loadConfig(infile):
         except:
             raise
 
-
 """
 Check if a variant has the provided annotation flags
 """
 def isAnnotatedAs(v, infos, flags):
     ret=False
-    for i in range(0, len(infos)):
-        annot=infos[i].split('|')
-        for pattern in flags:
-            p=re.compile(pattern)
-            if p.match(annot[1]):
+
+    ## Subset annotation information
+    subINFO=subsetINFO(infos, keys=flags.keys())
+    
+    ## Compare variant information and expected tags
+    for k in flags.keys():
+        for val in flags[k]:
+            if val == subINFO[k]:
                 ret=True
                 break
+
     return ret
+
+"""
+Subset the annotation information to a few key values
+"""
+def subsetINFO(annot, keys):
+    for i in range(0, len(annotInfo)):
+        z=dict((k, annotInfo[i][k]) for k in keys)
+    return(z)
+
+"""
+Read the INFO field from snpEff and return a list of dict
+"""
+def snpEff2dl(INFO):
+    if INFO is not None:
+        annotTag = INFO.split(',')                                                                                                                                       
+        annotInfo=[]                                                                                                                                                                                 
+        for i in range(0, len(annotTag)):                                                                                                                                                            
+            annot=annotTag[i].split('|')                                                                                                                                                             
+            dictannot = {i : annot[i] for i in range(0, len(annot))}                                                                                                                                 
+        annotInfo.append(dictannot)                                                                                                                                                              
+        return(annotInfo)
+
+"""
+Read the INFO field from ANNOVAR and retur a list of dict
+"""
+def annovar2dl(INFO):
+    if INFO is not None:
+        return [dict(INFO)]
+
 
 """
 Parse inputs
@@ -118,23 +150,31 @@ if __name__ == "__main__":
     for variant in VCF(args.vcf):
         varCounter+=1
         if (varCounter % 100 == 0):
-            #print ("## ",varCounter)
-            if varCounter == 100000:
+            print ("## ",varCounter)
+            if varCounter == 100:
                 sys.exit()
 
-        if args.verbose:
-            print (variant.CHROM, variant.start, variant.end, variant.INFO.get(dbflags['tag']))
-
         try:
-            annotInfo = variant.INFO.get(dbflags['tag']).split(',')
+            ## Get annotInfo as a list of dict
+            if args.annot == "snpEff":
+                annotInfo = snpEff2dl(variant.INFO.get(dbflags['tag']))
+            elif args.annot == "annovar" :
+                annotInfo = annovar2dl(variant.INFO)
+
+            if args.verbose:
+                print (variant.CHROM, variant.start, variant.end, annotInfo)
+
+            ## No INFO available
+            if annotInfo is None:
+                continue
 
             ## Variant Allele Frequency
-            if variant.INFO.get('AF') < args.minVAF:
-                continue
+            #if variant.INFO.get('AF') < args.minVAF:
+            #    continue
                 
             ## Sequencing Depth
-            if variant.INFO.get('DP') < args.minDepth:
-                continue
+            #if variant.INFO.get('DP') < args.minDepth:
+            #    continue
 
             ## Coding variants
             if args.filterCoding and isAnnotatedAs(variant, infos=annotInfo, flags=dbflags['isCoding']):
@@ -157,17 +197,17 @@ if __name__ == "__main__":
                 continue
 
             ## Hotpost
-            if args.filterHotspot and isHotspot(v, infos=annotInfo, flags=dbflags['isHotspot'][args.hotspotDb]):
-                continue
+            #if args.filterHotspot and isHotspot(v, infos=annotInfo, flags=dbflags['isHotspot'][args.hotspotDb]):
+            #    continue
 
             ## Germline
-            if args.filterGermline and isGermline(v, infos=annotInfo, flags=dbflags['isGermline'][args.germlineDb]):
-                continue
+            #if args.filterGermline and isGermline(v, infos=annotInfo, flags=dbflags['isGermline'][args.germlineDb]):
+            #    continue
 
         except:
             ## TODO - try to catch different cases or at least to print info to check what's going on and where
             warnings.warn("Warning ...")
-        
+            raise
 
         ### Usage examples of cyvcf
         #variant.REF, variant.ALT # e.g. REF='A', ALT=['C', 'T']

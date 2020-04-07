@@ -1,25 +1,32 @@
 ## Describe the fields
+## For definition, provide the expected key:values
+## Note that several keys/values can be defined
 
 snpEff:
   tag: 'ANN'
+
   isCoding:
-    - intragenic_variant
-    - 5_prime_UTR
-    - 3_prime_UTR
+    1:
+      - intragenic_variant
+      - 5_prime_UTR
+      - 3_prime_UTR
 
   isNonCoding:
-    - intergenic_region
-    - intron_variant
-    - upstream_gene_variant
+    1:
+      - intergenic_region
+      - intron_variant
+      - upstream_gene_variant
 
   isSynonymous:
-    - synonymous_variant
+    1:
+      - synonymous_variant
   
   isNonSynonymous:
-    - missense_variant
-    - initiator_codon_variant
-    - stop_retained_variant
-    - stop_gained
+    1:
+      - missense_variant
+      - initiator_codon_variant
+      - stop_retained_variant
+      - stop_gained
 
   isHotspot:
     cosmic:
@@ -32,7 +39,25 @@ snpEff:
 
 annovar:
   tag: ''
+
   isCoding:
+    Func.refGene:
+      - exonic
+      - splicing
+
   isNonCoding:
+    Func.refGene:  
+    - intronic
+
+  isSynonymous:
+    ExonicFunc.refGene:
+      - synonymous_SNV
+    TYPE:
+      - synonymous_SNV
+
+  isNonSynonymous:
+    - ExonicFunc.refGene=nonsynonymous_SNV
+
   isHotspot:
+
   isGermline:
