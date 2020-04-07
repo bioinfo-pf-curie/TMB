@@ -43,136 +43,54 @@ import argparse
 import sys
 import warnings
 import re
+import yaml
 
 
 """
-Check if the variant affects the coding sequence
+Load yaml file
 """
-def isCoding(v, db="snpEff"):
+def loadConfig(infile):
+    with open(infile, 'r') as stream:
+        try:
+            return(yaml.safe_load(stream))
+        except:
+            raise
+
+
+"""
+Check if a variant has the provided annotation flags
+"""
+def isAnnotatedAs(v, infos, flags):
     ret=False
-
-    ## snpEff annotation
-    snpEffFlag=["intragenic_variant", "5_prime_UTR", "3_prime_UTR"]
-    ## ANNOVAR annotation
-    annovarFlag=[]
-
-    if db == "snpEff":
-        flags = snpEffFlag
-    elif db == "annovar":
-        flags = annovarFlag
-
-    annotInfo=v.INFO.get('ANN').split(',')
-    for i in range(0, len(annotInfo)):
-        annot=annotInfo[i].split('|')
+    for i in range(0, len(infos)):
+        annot=infos[i].split('|')
         for pattern in flags:
             p=re.compile(pattern)
             if p.match(annot[1]):
                 ret=True
                 break
-        
-    if ret:
-        print("CODING")
-
-    return ret
-
-
-"""
-Check if the variant is within a non-coding region
-"""
-def isNonCoding(v):
-    ret=False
-    
-    ## snpEff annotation
-    flags=["intergenic_region", "intron_variant", "upstream_gene_variant"]
-
-    annotInfo=v.INFO.get('ANN').split(',')
-    for i in range(0, len(annotInfo)):
-        annot=annotInfo[i].split('|')
-        for pattern in flags:
-            p=re.compile(pattern)
-            if p.match(annot[1]):
-                ret=True
-                break
-
-    if ret:
-        print("NONCODING")
-
-    return ret
-
-
-"""
-Is synonymous variant
-"""
-def isSynonymous(v):
-    ret=False
-
-    ## snpEff annotation
-    flags=["synonymous_variant"]
-
-    annotInfo=v.INFO.get('ANN').split(',')
-    for i in range(0, len(annotInfo)):
-        annot=annotInfo[i].split('|')
-        for pattern in flags:
-            p=re.compile(pattern)
-            if p.match(annot[1]):
-                ret=True
-                break
-    if ret:
-        print("SYN")
-
     return ret
 
 """
-Is mis-sense variants
+Parse inputs
 """
-def isNonSynonymous(v):
-    ret=False
-
-    ## snpEff annotation
-    flags=["missense_variant", "initiator_codon_variant", "stop_retained_variant", "stop_gained"]
-
-    annotInfo=v.INFO.get('ANN').split(',')
-    for i in range(0, len(annotInfo)):
-        annot=annotInfo[i].split('|')
-        for pattern in flags:
-            p=re.compile(pattern)
-            if p.match(annot[1]):
-                ret=True
-                break
-    if ret:
-        print("NONSYN")
-
-    return ret
-
-
-def isHotspot(v, databases):
-    print (v.INFO.get('cosmic_coding_ID'))
-    print (v.INFO.get('cosmic_noncoding_ID'))
-
-    return True
-
-def isGermline(v, databases):
-    return True
-
-
 def argsParse():
     parser = argparse.ArgumentParser()
     parser.add_argument("-i", "--vcf", help="Input file (.vcf, .vcf.gz, .bcf)")
-
+    parser.add_argument("-c", "--config", help="Databases config file", default="./config/databases.yml")
+    parser.add_argument("-a", "--annot", help="Annotation format used in the vcf file", default="snpEff")
     parser.add_argument("--bed", help="Capture design (BED file)", default=None)
     
     ## Thresholds
-    parser.add_argument("--minVAF", help="Select variants with Allelic Ratio > minAR", type=float, default=0.05)
-    parser.add_argument("--minMAF", help="Select variants with MAF > minMAF", type=float, default=0.001)
-    parser.add_argument("--minDepth", help="Select variants with depth > minDepth", type=int, default=5)
+    parser.add_argument("--minVAF", help="Filter variants with Allelic Ratio < minAR", type=float, default=0.05)
+    parser.add_argument("--minMAF", help="Filter variants with MAF < minMAF", type=float, default=0.001)
+    parser.add_argument("--minDepth", help="Filter variants with depth < minDepth", type=int, default=5)
     
     ## Which variants to use
-    parser.add_argument("--useCoding", help="Include Coding variants", action="store_true")
-    parser.add_argument("--useNonCoding", help="Include Non-coding variants", action="store_true")
-    parser.add_argument("--useSyn", help="Include Synonymous variants", action="store_true")
-    parser.add_argument("--useNonSyn", help="Include Non-Synonymous variants", action="store_true")
-
-    ## Which variants to filter
+    parser.add_argument("--filterCoding", help="Filter Coding variants", action="store_true")
+    parser.add_argument("--filterNonCoding", help="Filter Non-coding variants", action="store_true")
+    parser.add_argument("--filterSyn", help="Filter Synonymous variants", action="store_true")
+    parser.add_argument("--filterNonSyn", help="Filter Non-Synonymous variants", action="store_true")
     parser.add_argument("--filterHotspot", help="Filter variants in hotspots", action="store_true")
     parser.add_argument("--filterGermline", help="Filter potential variants flagged as germline in databases", action="store_true")
     
@@ -191,8 +109,11 @@ def argsParse():
 if __name__ == "__main__":
 
     args = argsParse()
-    varCounter=0
-    varTMB=0
+    dbconfig = loadConfig(args.config)
+    dbflags = dbconfig[args.annot]
+
+    varCounter = 0
+    varTMB = 0
     
     for variant in VCF(args.vcf):
         varCounter+=1
@@ -202,9 +123,11 @@ if __name__ == "__main__":
                 sys.exit()
 
         if args.verbose:
-            print (variant.CHROM, variant.start, variant.end, variant.INFO.get("ANN"))
+            print (variant.CHROM, variant.start, variant.end, variant.INFO.get(dbflags['tag']))
 
         try:
+            annotInfo = variant.INFO.get(dbflags['tag']).split(',')
+
             ## Variant Allele Frequency
             if variant.INFO.get('AF') < args.minVAF:
                 continue
@@ -212,33 +135,35 @@ if __name__ == "__main__":
             ## Sequencing Depth
             if variant.INFO.get('DP') < args.minDepth:
                 continue
-                    
-            ## MAF
-                    
+
             ## Coding variants
-            if args.useCoding and not isCoding(variant):
+            if args.filterCoding and isAnnotatedAs(variant, infos=annotInfo, flags=dbflags['isCoding']):
+                print("FILTER IS_CODING")
                 continue
 
             ## Non-coding variants
-            if args.useNonCoding and not isNonCoding(variant):
+            if args.filterNonCoding and isAnnotatedAs(variant, infos=annotInfo, flags=dbflags['isNonCoding']):
+                print("FILTER IS_NON_CODING")
                 continue 
 
             ## Synonymous
-            if args.useSyn and not isSynonymous(variant):
+            if args.filterSyn and isAnnotatedAs(variant, infos=annotInfo, flags=dbflags['isSynonymous']):
+                print("FILTER IS_SYNONYMOUS")
                 continue
             
             ## Non synonymous
-            if args.useNonSyn and not isNonSynonymous(v):
+            if args.filterNonSyn and isAnnotatedAs(v, infos=annotInfo, flags=dbflags['isNonSynonymous']):
+                print("FILTER IS_NON_SYNONYMOUS")
                 continue
 
             ## Hotpost
-            if args.filterHotspot and isHotspot(v, args.hotspotDb):
+            if args.filterHotspot and isHotspot(v, infos=annotInfo, flags=dbflags['isHotspot'][args.hotspotDb]):
                 continue
 
             ## Germline
-            if args.filterGermline and isGermline(v, args.germlineDb):
+            if args.filterGermline and isGermline(v, infos=annotInfo, flags=dbflags['isGermline'][args.germlineDb]):
                 continue
-                
+
         except:
             ## TODO - try to catch different cases or at least to print info to check what's going on and where
             warnings.warn("Warning ...")

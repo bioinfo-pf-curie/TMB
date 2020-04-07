@@ -1,0 +1,38 @@
+## Describe the fields
+
+snpEff:
+  tag: 'ANN'
+  isCoding:
+    - intragenic_variant
+    - 5_prime_UTR
+    - 3_prime_UTR
+
+  isNonCoding:
+    - intergenic_region
+    - intron_variant
+    - upstream_gene_variant
+
+  isSynonymous:
+    - synonymous_variant
+  
+  isNonSynonymous:
+    - missense_variant
+    - initiator_codon_variant
+    - stop_retained_variant
+    - stop_gained
+
+  isHotspot:
+    cosmic:
+      - cosmic_coding_ID
+      - cosmic_noncoding_ID
+
+  isGermline:
+    1K:
+    gnomAD:
+
+annovar:
+  tag: ''
+  isCoding:
+  isNonCoding:
+  isHotspot:
+  isGermline:

@@ -8,3 +8,4 @@ channels:
 dependencies:
   - conda-forge::python=3.6.10
   - bioconda::cyvcf2=0.11.7
+  - conda-forge::pyyaml=5.3.1
