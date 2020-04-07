@@ -60,45 +60,53 @@ def loadConfig(infile):
 Check if a variant has the provided annotation flags
 """
 def isAnnotatedAs(v, infos, flags):
-    ret=False
 
-    ## Subset annotation information
-    subINFO=subsetINFO(infos, keys=flags.keys())
+    ## Subset annotation information as list
+    subINFO = subsetINFO(infos, keys=flags.keys())
     
-    ## Compare variant information and expected tags
-    for k in flags.keys():
-        for val in flags[k]:
-            if val == subINFO[k]:
-                ret=True
-                break
+    ## Compare list variant information and expected list of tags
+    for sub in subINFO:
+        ## For all keys
+        for k in flags.keys():
+            ## For each value in keys
+            for val in flags[k]:
+                ## Use search to deal with multiple annotations
+                if re.search(val, sub[k]):
+                    return(True)
 
-    return ret
+    return(False)
 
 """
 Subset the annotation information to a few key values
 """
 def subsetINFO(annot, keys):
+
+    subsetInfo=[]
     for i in range(0, len(annotInfo)):
-        z=dict((k, annotInfo[i][k]) for k in keys)
-    return(z)
+        z = dict((k, annotInfo[i][k]) for k in keys)
+        subsetInfo.append(z)
+
+    return(subsetInfo)
 
 """
-Read the INFO field from snpEff and return a list of dict
+Format the INFO field from snpEff and return a list of dict
 """
 def snpEff2dl(INFO):
+
     if INFO is not None:
         annotTag = INFO.split(',')                                                                                                                                       
         annotInfo=[]                                                                                                                                                                                 
         for i in range(0, len(annotTag)):                                                                                                                                                            
             annot=annotTag[i].split('|')                                                                                                                                                             
             dictannot = {i : annot[i] for i in range(0, len(annot))}                                                                                                                                 
-        annotInfo.append(dictannot)                                                                                                                                                              
+            annotInfo.append(dictannot)                                                                                                                                                              
         return(annotInfo)
 
 """
-Read the INFO field from ANNOVAR and retur a list of dict
+Format the INFO field from ANNOVAR and return a list of dict
 """
 def annovar2dl(INFO):
+
     if INFO is not None:
         return [dict(INFO)]
 
@@ -110,7 +118,7 @@ def argsParse():
     parser = argparse.ArgumentParser()
     parser.add_argument("-i", "--vcf", help="Input file (.vcf, .vcf.gz, .bcf)")
     parser.add_argument("-c", "--config", help="Databases config file", default="./config/databases.yml")
-    parser.add_argument("-a", "--annot", help="Annotation format used in the vcf file", default="snpEff")
+    parser.add_argument("-a", "--annot", help="Annotation format used in the vcf file", default="snpeff")
     parser.add_argument("--bed", help="Capture design (BED file)", default=None)
     
     ## Thresholds
@@ -151,22 +159,22 @@ if __name__ == "__main__":
         varCounter+=1
         if (varCounter % 100 == 0):
             print ("## ",varCounter)
-            if varCounter == 100:
+            if varCounter == 10000:
                 sys.exit()
 
         try:
             ## Get annotInfo as a list of dict
-            if args.annot == "snpEff":
+            if args.annot == "snpeff":
                 annotInfo = snpEff2dl(variant.INFO.get(dbflags['tag']))
             elif args.annot == "annovar" :
                 annotInfo = annovar2dl(variant.INFO)
 
-            if args.verbose:
-                print (variant.CHROM, variant.start, variant.end, annotInfo)
-
-            ## No INFO available
+            ## No INFO field
             if annotInfo is None:
                 continue
+
+            if args.verbose:
+                print (variant.CHROM, variant.start, variant.end, annotInfo)
 
             ## Variant Allele Frequency
             #if variant.INFO.get('AF') < args.minVAF:
@@ -192,7 +200,7 @@ if __name__ == "__main__":
                 continue
             
             ## Non synonymous
-            if args.filterNonSyn and isAnnotatedAs(v, infos=annotInfo, flags=dbflags['isNonSynonymous']):
+            if args.filterNonSyn and isAnnotatedAs(variant, infos=annotInfo, flags=dbflags['isNonSynonymous']):
                 print("FILTER IS_NON_SYNONYMOUS")
                 continue
 
