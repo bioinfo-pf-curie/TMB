@@ -209,8 +209,10 @@ def argsParse():
     parser.add_argument("--cancerDb", help="Databases used for cancer hotspot annotation", default="cosmic")
     
     ## Others
-    parser.add_argument("-v", "--verbose", help="Active verbose mode", action="store_true")
+    parser.add_argument("--verbose", help="Active verbose mode", action="store_true")
+    parser.add_argument("--debug", help="Active debug mode", action="store_true")
     parser.add_argument("--version", help="Pipeline version", action="store_true")
+
     
     args = parser.parse_args()
     return (args)
@@ -237,9 +239,9 @@ if __name__ == "__main__":
 
     for variant in VCF(args.vcf):
         varCounter+=1
-        if (varCounter % 1000 == 0):
+        if (varCounter % 1000 == 0 and args.verbose):
             print ("## ",varCounter)
-            if varCounter == 100000:
+            if args.debug and varCounter == 100000:
                 sys.exit()
 
         try:
@@ -256,26 +258,31 @@ if __name__ == "__main__":
             if dbInfo is None or annotInfo is None:
                 continue
             
-            if args.verbose:
+            if args.debug:
                 print (variant.CHROM, variant.start, variant.end, variant.QUAL, variant.FILTER, dbInfo, variant.FORMAT)
 
             ## Variant Allele Frequency
             if getTag(variant, dbflags['freqTag']) < args.minVAF:
-                print("FILTER FREQ")
+                if args.debug:
+                    print("FILTER FREQ")
                 continue
                 
             ## Sequencing Depth
             if getTag(variant, dbflags['depthTag']) < args.minDepth:
-                print("FILTER DEPTH")
+                if args.debug:
+                    print("FILTER DEPTH")
                 continue
 
             ## Variant has a QUAL value or not PASS in the FILTER column
             if args.filterLowQual and (variant.QUAL is not None or variant.FILTER is not None):
+                if args.debug:
+                    print("FILTER PASS")
                 continue
  
             ## Coding variants
             if args.filterCoding and isAnnotatedAs(variant, infos=annotInfo, flags=dbflags['isCoding']):
-                print("FILTER IS_CODING")
+                if args.debug:
+                    print("FILTER IS_CODING")
                 continue
 
             ## Non-coding variants
@@ -285,12 +292,14 @@ if __name__ == "__main__":
 
             ## Synonymous
             if args.filterSyn and isAnnotatedAs(variant, infos=annotInfo, flags=dbflags['isSynonymous']):
-                print("FILTER IS_SYNONYMOUS")
+                if args.debug:
+                    print("FILTER IS_SYNONYMOUS")
                 continue
             
             ## Non synonymous
             if args.filterNonSyn and isAnnotatedAs(variant, infos=annotInfo, flags=dbflags['isNonSynonymous']):
-                print("FILTER IS_NON_SYNONYMOUS")
+                if args.debug:
+                    print("FILTER IS_NON_SYNONYMOUS")
                 continue
 
             ## Hotpost
@@ -302,7 +311,8 @@ if __name__ == "__main__":
                         fdb.append(x)
  
                 if isCancerHotspot(variant, infos=dbInfo, flags=fdb):
-                    print("FILTER HOSTPOT")
+                    if args.debug:
+                        print("FILTER HOSTPOT")
                     continue
 
             ## Large Genome Cohort
@@ -314,17 +324,19 @@ if __name__ == "__main__":
                         fdb.append(x)
 
                 if isGenomeDb(variant, infos=dbInfo, flags=fdb, val=args.minMAF):
-                    print("FILTER MAF")
+                    if args.debug:
+                        print("FILTER MAF")
                     continue
 
-                ## Still alive
-                varTMB += 1
         except:
             ## TODO - try to catch different cases or at least to print info to check what's going on and where
             warnings.warn("Warning ...")
             raise
 
-        ## Calculate TMB
-        TMB = float(varTMB)/float(effGS)*1e6
-        print("TMB=",TMB)
+        ## Still alive
+        varTMB += 1
+
+    ## Calculate TMB
+    TMB = float(varTMB)/(float(effGS)/1e6)
+    print("TMB=",TMB)
 
