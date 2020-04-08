@@ -175,7 +175,9 @@ def getTag(v, tag):
     if tag not in variant.FORMAT or val is None:
         val=variant.INFO.get(tag)
 
-    return float(val)
+    if val is not None:
+        val=float(val)
+    return(val)
 
 """
 Parse inputs
@@ -262,13 +264,15 @@ if __name__ == "__main__":
                 print (variant.CHROM, variant.start, variant.end, variant.QUAL, variant.FILTER, dbInfo, variant.FORMAT)
 
             ## Variant Allele Frequency
-            if getTag(variant, dbflags['freqTag']) < args.minVAF:
+            fval=getTag(variant, dbflags['freqTag'])
+            if fval is not None and fval < args.minVAF:
                 if args.debug:
                     print("FILTER FREQ")
                 continue
                 
             ## Sequencing Depth
-            if getTag(variant, dbflags['depthTag']) < args.minDepth:
+            dval=getTag(variant, dbflags['depthTag'])
+            if dval is not None and dval < args.minDepth:
                 if args.debug:
                     print("FILTER DEPTH")
                 continue
