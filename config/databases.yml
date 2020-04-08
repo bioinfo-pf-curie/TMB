@@ -2,9 +2,17 @@
 ## For definition, provide the expected key:values
 ## Note that several keys/values can be defined
 
-snpeff:
-  tag: 'ANN'
+###############################################
+## SnpEff Parsing
 
+snpeff:
+
+  ## Tags
+  freqTag: 'AF'
+  depthTag: 'DP'
+  annotTag: 'ANN'
+
+  ## Annotation flags
   isCoding:
     1:
       - intragenic_variant
@@ -28,18 +36,35 @@ snpeff:
       - stop_retained_variant
       - stop_gained
 
-  isHotspot:
+  ## Databases
+  cancerDb:
     cosmic:
       - cosmic_coding_ID
       - cosmic_noncoding_ID
 
-  isGermline:
-    1K:
-    gnomAD:
+  genomeDb:
+    1k:
+      - kg_AMR_AF
+      - kg_AFR_AF
+      - kg_EAS_AF
+      - kg_EUR_AF
+      - kg_SAS_AF
+
+    gnomad:
+      - gnomAD_genomes_AF
+
+
+#################################################
+## ANNOVAR Parsing
 
 annovar:
-  tag: ''
 
+  ## Tags
+  freqTag: 'ALLELIC_RATIO'
+  depthTag: 'DEP'
+  annotTag: ''
+
+  ## Annotation flags
   isCoding:
     Func.refGene:
       - exonic
@@ -52,12 +77,22 @@ annovar:
   isSynonymous:
     ExonicFunc.refGene:
       - synonymous_SNV
-    TYPE:
-      - synonymous_SNV
 
   isNonSynonymous:
-    - ExonicFunc.refGene=nonsynonymous_SNV
+    ExonicFunc.refGene
+      - nonsynonymous_SNV
 
-  isHotspot:
+  ## Databases
+  cancerDb:
+    cosmic:
+      - cosmic86
 
-  isGermline:
+  genomeDb:
+    1k:
+      - 1000g2015aug_all
+
+    gnomad:
+      - gnomAD_exome_ALL
+
+    exac:
+      - ExAC_ALL
