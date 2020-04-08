@@ -1,0 +1,14 @@
+## Describe the fields
+## For definition, provide the expected key:values
+## Note that several keys/values can be defined
+##
+###############################################
+
+mutect:
+  freq: 'AF'
+  depth: 'DP'
+
+varscan:
+  freq: 'ALLELIC_RATIO'
+  depth: 'DP'
+

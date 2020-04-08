@@ -8,9 +8,8 @@
 snpeff:
 
   ## Tags
-  freqTag: 'AF'
-  depthTag: 'DP'
-  annotTag: 'ANN'
+  tag: 'ANN'
+  sep: '&'
 
   ## Annotation flags
   isCoding:
@@ -24,6 +23,12 @@ snpeff:
       - upstream_gene_variant
       - 5_prime_UTR_variant
       - 3_prime_UTR_variant
+
+  isSplicing:
+    1:
+      - splice_donor_variant
+      - splice_acceptor_variant
+      - splice_region_variant
 
   isSynonymous:
     1:
@@ -42,7 +47,7 @@ snpeff:
       - cosmic_coding_ID
       - cosmic_noncoding_ID
 
-  genomeDb:
+  polymDb:
     1k:
       - kg_AMR_AF
       - kg_AFR_AF
@@ -60,19 +65,27 @@ snpeff:
 annovar:
 
   ## Tags
-  freqTag: 'ALLELIC_RATIO'
-  depthTag: 'DEP'
-  annotTag: ''
+  tag: ''
+  sep: '\x3b'
 
   ## Annotation flags
   isCoding:
     Func.refGene:
       - exonic
+
+  isSplicing:
+    Func.refGene:
       - splicing
 
   isNonCoding:
     Func.refGene:  
     - intronic
+    - UTR5
+    - UTR3
+    - ncRNA_exonic
+    - upstream
+    - intergenic
+    - downstream
 
   isSynonymous:
     ExonicFunc.refGene:
@@ -87,7 +100,7 @@ annovar:
     cosmic:
       - cosmic86
 
-  genomeDb:
+  polymDb:
     1k:
       - 1000g2015aug_all
 

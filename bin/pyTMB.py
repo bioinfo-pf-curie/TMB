@@ -14,7 +14,7 @@
 #
 ##############################################################################
 
-
+__version__='1.0.0'
 
 """
 Step of the script:  
@@ -38,12 +38,15 @@ Step of the script:
 """
 
 
-from cyvcf2 import VCF
+import cyvcf2 
+#import VCF
 import argparse
 import sys
 import warnings
 import re
 import yaml
+from datetime import date
+
 
 
 """
@@ -86,11 +89,11 @@ def getEffGenomeSizeFromBed(infile, verbose=False):
 """
 Check if a variant has the provided annotation flags
 """
-def isAnnotatedAs(v, infos, flags):
+def isAnnotatedAs(v, infos, flags, sep):
 
     ## Subset annotation information as list
     subINFO = subsetINFO(infos, keys=flags.keys())
-    
+
     ## Compare list variant information and expected list of tags
     for sub in subINFO:
         ## For all keys
@@ -98,16 +101,19 @@ def isAnnotatedAs(v, infos, flags):
             ## For each value in keys
             for val in flags[k]:
                 ## Use search to deal with multiple annotations
-                if re.search(val, sub[k]):
-                    return(True)
-
+                for subval in sub[k].split(sep):
+                    if val == subval:
+                        return(True)
+                #else:
+                #    if re.search(val, sub[k]):
+                #        return(True)
     return(False)
 
 
 """
 Check if a variant is in a genomeDb with a MAF > val
 """
-def isGenomeDb(v, infos, flags, val):
+def isPolym(v, infos, flags, val):
 
     subINFO = subsetINFO(infos, keys=flags)
     for key in subINFO:
@@ -134,8 +140,9 @@ def subsetINFO(annot, keys):
     if isinstance(annot, list):
         subsetInfo=[]
         for i in range(0, len(annot)):
-            z = dict((k, annot[i][k]) for k in keys if k in annot)
-            subsetInfo.append(z)
+            z = dict((k, annot[i][k]) for k in keys if k in annot[i])
+            if len(z) > 0:
+                subsetInfo.append(z)
     else:
         subsetInfo = dict((k, annot[k]) for k in keys if k in annot)
 
@@ -185,8 +192,11 @@ Parse inputs
 def argsParse():
     parser = argparse.ArgumentParser()
     parser.add_argument("-i", "--vcf", help="Input file (.vcf, .vcf.gz, .bcf)")
-    parser.add_argument("-c", "--config", help="Databases config file", default="./config/databases.yml")
+    parser.add_argument("-d", "--dbConfig", help="Databases config file", default="./config/databases.yml")
+    parser.add_argument("-c", "--varConfig", help="Variant calling config file", default="./config/calling.yml")
+ 
     parser.add_argument("-a", "--annot", help="Annotation format used in the vcf file", default="snpeff")
+    parser.add_argument("-s", "--caller", help="Caller soft used to generate the vcf file", default="mutect")
 
     ## Efective genome size
     parser.add_argument("--effGenomeSize", help="Effective genome size", type=int, default=None)
@@ -199,21 +209,23 @@ def argsParse():
     
     ## Which variants to use
     parser.add_argument("--filterLowQual", help="Filter low quality (i.e not PASS) variant", action="store_true")
+    parser.add_argument("--filterIndels", help="Filter insertions/deletions", action="store_true")
     parser.add_argument("--filterCoding", help="Filter Coding variants", action="store_true")
+    parser.add_argument("--filterSplice", help="Filter Splice variants", action="store_true")
     parser.add_argument("--filterNonCoding", help="Filter Non-coding variants", action="store_true")
     parser.add_argument("--filterSyn", help="Filter Synonymous variants", action="store_true")
     parser.add_argument("--filterNonSyn", help="Filter Non-Synonymous variants", action="store_true")
     parser.add_argument("--filterCancerHotspot", help="Filter variants annotated as cancer hotspots", action="store_true")
-    parser.add_argument("--filterGenomeDb", help="Filter variants detected in large genome databases. See --minMAF", action="store_true")
+    parser.add_argument("--filterPolym", help="Filter polymorphism or recurrnet variants in genome databases. See --minMAF", action="store_true")
     
     ## Databases
-    parser.add_argument("--genomeDb", help="Databases used for large genome annotation (comma separated)", default="gnomad")
+    parser.add_argument("--polymDb", help="Databases used for polymorphisms and recurrent variants (comma separated)", default="gnomad")
     parser.add_argument("--cancerDb", help="Databases used for cancer hotspot annotation", default="cosmic")
     
     ## Others
-    parser.add_argument("--verbose", help="Active verbose mode", action="store_true")
-    parser.add_argument("--debug", help="Active debug mode", action="store_true")
-    parser.add_argument("--version", help="Pipeline version", action="store_true")
+    parser.add_argument("--verbose", action="store_true")
+    parser.add_argument("--debug", action="store_true")
+    parser.add_argument("--version", action='version', version="%(prog)s ("+__version__+")")
 
     
     args = parser.parse_args()
@@ -223,8 +235,20 @@ def argsParse():
 if __name__ == "__main__":
 
     args = argsParse()
-    dbconfig = loadConfig(args.config)
+
+    ## Loading Data
+    vcf = cyvcf2.VCF(args.vcf)
+    if args.debug:
+        vcf.add_info_to_header({'ID': 'DEBUG', 'Description': 'DEBUG FLAGS',                                                                                                                             
+                                'Type':'Character', 'Number': '1'})                                                                                                                                      
+        w = cyvcf2.Writer("output.vcf", vcf)
+
+
+    dbconfig = loadConfig(args.dbConfig)
     dbflags = dbconfig[args.annot]
+
+    varconfig = loadConfig(args.varConfig)
+    callerflags = varconfig[args.caller]
 
     varCounter = 0
     varTMB = 0
@@ -238,8 +262,7 @@ if __name__ == "__main__":
     else:
         effGS = args.effGenomeSize
     
-
-    for variant in VCF(args.vcf):
+    for variant in vcf:
         varCounter+=1
         if (varCounter % 1000 == 0 and args.verbose):
             print ("## ",varCounter)
@@ -249,62 +272,76 @@ if __name__ == "__main__":
         try:
             ## All vcf INFO
             dbInfo=dict(variant.INFO)
+            debugInfo=""
 
             ## Get annotation INFO as a list of dict
             if args.annot == "snpeff":
-                annotInfo = snpEff2dl(variant.INFO.get(dbflags['annotTag']))
+                annotInfo = snpEff2dl(variant.INFO.get(dbflags['tag']))
             elif args.annot == "annovar" :
                 annotInfo = annovar2dl(variant.INFO)
+            
+            sep = dbflags['sep'] 
 
             ## No INFO field
             if dbInfo is None or annotInfo is None:
-                continue
+                if not args.debug:
+                    continue
             
-            if args.debug:
-                print (variant.CHROM, variant.start, variant.end, variant.QUAL, variant.FILTER, dbInfo, variant.FORMAT)
+            ## Indels
+            if variant.is_indel:
+                debugInfo=debugInfo+"INDEL|"
+                if not args.debug: 
+                    continue
 
             ## Variant Allele Frequency
-            fval=getTag(variant, dbflags['freqTag'])
+            fval=getTag(variant, callerflags['freq'])
             if fval is not None and fval < args.minVAF:
-                if args.debug:
-                    print("FILTER FREQ")
-                continue
+                debugInfo=debugInfo+"VAF|"
+                if not args.debug: 
+                    continue
                 
             ## Sequencing Depth
-            dval=getTag(variant, dbflags['depthTag'])
+            dval=getTag(variant, callerflags['depth'])
             if dval is not None and dval < args.minDepth:
-                if args.debug:
-                    print("FILTER DEPTH")
-                continue
+                debugInfo=debugInfo+"DEPTH|"
+                if not args.debug: 
+                    continue
 
             ## Variant has a QUAL value or not PASS in the FILTER column
             if args.filterLowQual and (variant.QUAL is not None or variant.FILTER is not None):
-                if args.debug:
-                    print("FILTER PASS")
-                continue
+                debugInfo=debugInfo+"QUAL|"
+                if not args.debug: 
+                    continue
  
             ## Coding variants
-            if args.filterCoding and isAnnotatedAs(variant, infos=annotInfo, flags=dbflags['isCoding']):
-                if args.debug:
-                    print("FILTER IS_CODING")
-                continue
+            if args.filterCoding and isAnnotatedAs(variant, infos=annotInfo, flags=dbflags['isCoding'], sep=sep):
+                debugInfo=debugInfo+"CODING|"
+                if not args.debug: 
+                    continue
+
+            ## Splice variants
+            if args.filterSplice and isAnnotatedAs(variant, infos=annotInfo, flags=dbflags['isSplicing'], sep=sep):
+                debugInfo=debugInfo+"SPLICING|"
+                if not args.debug: 
+                    continue
 
             ## Non-coding variants
-            if args.filterNonCoding and isAnnotatedAs(variant, infos=annotInfo, flags=dbflags['isNonCoding']):
-                print("FILTER IS_NON_CODING")
-                continue 
-
+            if args.filterNonCoding and isAnnotatedAs(variant, infos=annotInfo, flags=dbflags['isNonCoding'], sep=sep):
+                debugInfo=debugInfo+"NONCODING|"
+                if not args.debug: 
+                    continue 
+                
             ## Synonymous
-            if args.filterSyn and isAnnotatedAs(variant, infos=annotInfo, flags=dbflags['isSynonymous']):
-                if args.debug:
-                    print("FILTER IS_SYNONYMOUS")
-                continue
+            if args.filterSyn and isAnnotatedAs(variant, infos=annotInfo, flags=dbflags['isSynonymous'], sep=sep):
+                debugInfo=debugInfo+"SYN|"
+                if not args.debug: 
+                    continue
             
             ## Non synonymous
-            if args.filterNonSyn and isAnnotatedAs(variant, infos=annotInfo, flags=dbflags['isNonSynonymous']):
-                if args.debug:
-                    print("FILTER IS_NON_SYNONYMOUS")
-                continue
+            if args.filterNonSyn and isAnnotatedAs(variant, infos=annotInfo, flags=dbflags['isNonSynonymous'], sep=sep):
+                debugInfo=debugInfo+"NON_SYN|"
+                if not args.debug: 
+                    continue
 
             ## Hotpost
             if args.filterCancerHotspot:
@@ -315,22 +352,22 @@ if __name__ == "__main__":
                         fdb.append(x)
  
                 if isCancerHotspot(variant, infos=dbInfo, flags=fdb):
-                    if args.debug:
-                        print("FILTER HOSTPOT")
-                    continue
+                    debugInfo=debugInfo+"HOTSPOT|"
+                    if not args.debug: 
+                        continue
 
-            ## Large Genome Cohort
-            if args.filterGenomeDb :
+            ## Polymorphisms
+            if args.filterPolym :
                 ## Flatten list of fields
                 fdb=[]
-                for db in args.genomeDb.split(','):
-                    for x in dbflags['genomeDb'][db]:
+                for db in args.polymDb.split(','):
+                    for x in dbflags['polymDb'][db]:
                         fdb.append(x)
 
-                if isGenomeDb(variant, infos=dbInfo, flags=fdb, val=args.minMAF):
-                    if args.debug:
-                        print("FILTER MAF")
-                    continue
+                if isPolym(variant, infos=dbInfo, flags=fdb, val=args.minMAF):
+                    debugInfo=debugInfo+"POLYM|"
+                    if not args.debug: 
+                        continue
 
         except:
             ## TODO - try to catch different cases or at least to print info to check what's going on and where
@@ -338,9 +375,46 @@ if __name__ == "__main__":
             raise
 
         ## Still alive
-        varTMB += 1
+        if debugInfo=="":
+            varTMB += 1
+
+        if args.debug:
+            variant.INFO["DEBUG"]=debugInfo
+            w.write_record(variant)
+
+    if args.debug:
+        w.close()
+    vcf.close()
 
     ## Calculate TMB
     TMB = float(varTMB)/(float(effGS)/1e6)
-    print("TMB=",TMB)
 
+    ## Output
+    print("pyTMB version=", __version__)
+    print("When=", date.today())
+    print("")
+    print("Config caller=", args.varConfig)
+    print("Config databases=", args.dbConfig)
+    print("Variant caller=", args.caller)
+    print("Annotation tool=", args.annot)
+    print("")
+    print("Filters:")
+    print("-------")
+    print("minVAF=", args.minVAF)
+    print("minMAF=", args.minMAF)
+    print("minDepth=", args.minDepth)
+    print("filterLowQual=", args.filterLowQual)
+    print("filterIndels=", args.filterIndels) 
+    print("filterCoding=", args.filterCoding)
+    print("filterNonCoding=", args.filterNonCoding)
+    print("filterSplice=", args.filterSplice)
+    print("filterSyn=", args.filterSyn)
+    print("filterNonSyn=", args.filterNonSyn)
+    print("filterConcerHostpot=", args.filterCancerHotspot)
+    print("filterPolym=", args.filterPolym)
+    print("")
+    print("Total number of variants=", varCounter)
+    print("Variants after filters=", varTMB)
+    print("Effective Genome Size=", effGS)
+    print("")
+    print("TMB=",TMB)
