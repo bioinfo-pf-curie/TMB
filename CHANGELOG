@@ -3,6 +3,7 @@ CHANGES IN VERSION 1.1.0
 
 BUG FIXES
 
+   o Deal with '.' in getTag
    o Fix bug in minDepth
 
 *************************************
