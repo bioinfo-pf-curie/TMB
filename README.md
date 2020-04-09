@@ -95,8 +95,8 @@ As an exemple, to assess whether a variant is coding, the programm will used (fo
 
 ```
   isCoding:
-      Func.refGene:
-	        - exonic			
+    Func.refGene:
+      - exonic			
 ```
 
 It will therefore search in the `INFO` field the key `Func.refGene` and the value `exonic`.
@@ -109,13 +109,13 @@ Regarding the databases, this is the same idea. Here is the list of databases, a
         - 1000g2015aug_all
       gnomad:
         - gnomAD_exome_ALL
-	  esp:
+      esp:
 	    - esp6500siv2_all
-	  exac:
-	  	  - ExAC_ALL
+      exac:
+       - ExAC_ALL
 ```
 
-The user can there choose to scan all databases with the `--polymDb 1k,gnomad,esp,exac` paramater.
+The user can thus choose to scan all databases with the `--polymDb 1k,gnomad,esp,exac` paramater.
 The same is true for the `--cancerDb` parameter.
 
 ## Usage
@@ -178,6 +178,29 @@ This option allows to export a `vcf` file which only contains the variants used 
 ### `--debug`
 
 The option allows to export a `vcf` file with the tag `TMB_FILTERS` in the `INFO` field. This tag therefore contains the reason for which a variant would be filtered.
+
+
+## Examples
+
+Let's calculated the TMB on a gene panel vcf file (coding size = 1.9Mb) as the following variants : 
+- PASS
+- minDepth at 100X
+- non-synonymous
+- coding
+- non polymorphism variants using 1K, gnomAD databases and a minMAF of 0.001
+
+In this case, a typical usage would be :
+
+```
+python pyTMB.py -i ${VCF} --minDepth 100 \
+--filterLowQual \
+--filterNonCoding \
+--filterSplice \
+--filterSyn \
+--filterPolym  --minMAF 0.001 --polymDb 1k,gnomad \
+--effGenomeSize 1590000 \
+--export > TMB_results.log
+```
 
 ### Credits
 
