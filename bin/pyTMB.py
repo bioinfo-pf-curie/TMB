@@ -33,7 +33,6 @@ python pyTMB.py -i ${VCF} --minDepth 100 \
 """
 
 import cyvcf2 
-#import VCF
 import argparse
 import sys
 import warnings
