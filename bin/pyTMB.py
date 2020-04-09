@@ -170,13 +170,15 @@ def getTag(v, tag):
 
     ## First check in FORMAT field
     if tag in variant.FORMAT:
-        val=variant.format(tag, str)
+        val=variant.format(tag)
+
     ## Otherwise, check in INFO field
     if tag not in variant.FORMAT or val is None:
         val=variant.INFO.get(tag)
 
     if val is not None:
         val=float(val)
+
     return(val)
 
 """

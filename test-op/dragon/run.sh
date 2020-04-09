@@ -9,7 +9,6 @@ filters="--minDepth 100 --filterNonCoding --filterSplice --filterSyn --filterPol
 
 RUN=D320
 echo -e "Barcode\tNb_Mut1\tTMB1\tNb_Mut2\tTMB2\tNb_Mut3\tTMB3\tNb_Mut4\tTMB4" > TMB_${RUN}_results.tsv
-
 for i in $(find /data/tmp/egirard/dragon_tests/D320/ANALYSIS/ -maxdepth 1 -type d -name "${RUN}*")
 do
     SAMPLE=$(basename $i)
