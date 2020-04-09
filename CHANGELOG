@@ -1,0 +1,13 @@
+*************************************
+CHANGES IN VERSION 1.1.0
+
+*************************************
+RELEASE VERSION 1.0.0
+
+   o Tested on the DRAGON data
+   o Support for Annovar and snpEff databases
+   o Support for Varscan2 and Mutect2
+
+
+
+
