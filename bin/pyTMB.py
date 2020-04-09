@@ -197,7 +197,7 @@ def argsParse():
     parser.add_argument("--bed", help="Capture design to use if effGenomeSize is not defined (BED file)", default=None)
     
     ## Thresholds
-    parser.add_argument("--minVAF", help="Filter variants with Allelic Ratio < minAR", type=float, default=0.05)
+    parser.add_argument("--minVAF", help="Filter variants with Allelic Ratio < minVAF", type=float, default=0.05)
     parser.add_argument("--minMAF", help="Filter variants with MAF < minMAF", type=float, default=0.001)
     parser.add_argument("--minDepth", help="Filter variants with depth < minDepth", type=int, default=5)
     
@@ -210,12 +210,12 @@ def argsParse():
     parser.add_argument("--filterSyn", help="Filter Synonymous variants", action="store_true")
     parser.add_argument("--filterNonSyn", help="Filter Non-Synonymous variants", action="store_true")
     parser.add_argument("--filterCancerHotspot", help="Filter variants annotated as cancer hotspots", action="store_true")
-    parser.add_argument("--filterPolym", help="Filter polymorphism or recurrnet variants in genome databases. See --minMAF", action="store_true")
+    parser.add_argument("--filterPolym", help="Filter polymorphism variants in genome databases. See --minMAF", action="store_true")
     parser.add_argument("--filterRecurrence", help="Filter on recurrence values", action="store_true")
     
     ## Databases
     parser.add_argument("--polymDb", help="Databases used for polymorphisms and recurrent variants (comma separated)", default="gnomad")
-    parser.add_argument("--cancerDb", help="Databases used for cancer hotspot annotation", default="cosmic")
+    parser.add_argument("--cancerDb", help="Databases used for cancer hotspot annotation (comma separated)", default="cosmic")
     
     ## Others
     parser.add_argument("--verbose", action="store_true")
