@@ -111,7 +111,7 @@ Regarding the databases, this is the same idea. Here is the list of databases, a
       gnomad:
         - gnomAD_exome_ALL
       esp:
-	    - esp6500siv2_all
+        - esp6500siv2_all
       exac:
        - ExAC_ALL
 ```
