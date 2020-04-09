@@ -38,6 +38,7 @@ import sys
 import warnings
 import re
 import yaml
+import os.path
 from datetime import date
 
 
@@ -171,6 +172,8 @@ def getTag(v, tag):
     ## First check in FORMAT field
     if tag in variant.FORMAT:
         val=variant.format(tag)
+        if val < 0:
+            val=None
 
     ## Otherwise, check in INFO field
     if tag not in variant.FORMAT or val is None:
@@ -238,12 +241,12 @@ if __name__ == "__main__":
     vcf = cyvcf2.VCF(args.vcf)
 
     if args.export:
-        wx = cyvcf2.Writer(re.sub(r'\.vcf$|\.vcf.gz$|\.bcf', '_export.vcf', args.vcf), vcf)
+        wx = cyvcf2.Writer(re.sub(r'\.vcf$|\.vcf.gz$|\.bcf', '_export.vcf', os.path.basename(args.vcf)), vcf)
 
     if args.debug:
         vcf.add_info_to_header({'ID': 'TMB_FILTERS', 'Description': 'Detected filters for TMB calculation',
                                 'Type':'Character', 'Number': '1'})                                                                                                                                      
-        wd = cyvcf2.Writer(re.sub(r'\.vcf$|\.vcf.gz$|\.bcf', '_debug.vcf', args.vcf), vcf)
+        wd = cyvcf2.Writer(re.sub(r'\.vcf$|\.vcf.gz$|\.bcf', '_debug.vcf', os.path.basename(args.vcf)), vcf)
 
 
     dbconfig = loadConfig(args.dbConfig)
@@ -286,8 +289,7 @@ if __name__ == "__main__":
 
             ## No INFO field
             if dbInfo is None or annotInfo is None:
-                if not args.debug:
-                    continue
+                continue
             
             ## Indels
             if args.filterIndels and variant.is_indel:
@@ -379,7 +381,7 @@ if __name__ == "__main__":
                         continue
 
         except:
-            warnflag = str(variant.CHROM) + ":" + str(variant.start+1) + "-" + str(variant.end)
+            warnflag = str(variant.CHROM) + ":" + str(variant.start) + "-" + str(variant.end)
             warnings.warn("Warning : variant ", warnflag, " raises an error. Skipped so far ...")
             raise
 
