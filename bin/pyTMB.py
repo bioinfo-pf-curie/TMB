@@ -214,7 +214,7 @@ def argsParse():
     parser.add_argument("--filterRecurrence", help="Filter on recurrence values", action="store_true")
     
     ## Databases
-    parser.add_argument("--polymDb", help="Databases used for polymorphisms and recurrent variants (comma separated)", default="gnomad")
+    parser.add_argument("--polymDb", help="Databases used for polymorphisms detection (comma separated)", default="gnomad")
     parser.add_argument("--cancerDb", help="Databases used for cancer hotspot annotation (comma separated)", default="cosmic")
     
     ## Others

@@ -69,7 +69,7 @@ optional arguments:
   --filterPolym                       Filter polymorphism variants in genome databases. See --minMAF
   --filterRecurrence                  Filter on recurrence values
   
-  --polymDb POLYMDB                   Databases used for polymorphisms and recurrent variants (comma separated)
+  --polymDb POLYMDB                   Databases used for polymorphisms detection (comma separated)
   --cancerDb CANCERDB                 Databases used for cancer hotspot annotation (comma separated)
   
   --verbose
