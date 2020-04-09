@@ -17,26 +17,20 @@
 __version__='1.0.0'
 
 """
-Step of the script:  
-- Read and parse annotated vcf file (PySam) 
-- TAG each variant directly in the .vcf file  
+This script is designed to calculate a TMB score from a VCF file.
+If no filters are specified, all variants will be used.
 
-- Variants with Allelic Ratio < 5%: LowFreq/PASS ## --minAR
-- Variants with MAF < XX: LowFreq/PASS ## --minMAF
-- Variants with Coverage < XX: LowDepth/PASS ## --minCov
+Let's defined a TMB as a score using PASS, non-synonymous, coding, non polymorphism variants ...
+In this case, a typical usage would be :
 
-- Variants annotated as coding/non coding: Relevant /NonRelevant ## --useNonCoding / --useCoding
-- Synonymous variant: NonSyn/Syn ## --useSyn / --useNonSyn 
-- Variants found in Gnomad: Germline/Somatic ## --useSomatic / --useGermline / --somaticDb
-- Variants found in COSMIC: Onco/PASS ## --useHotspot / --hotspotDb
-
-
-- Select variant of interest only Relevant, NonSyn, Somatic and PASS tagged variants and filter other variants (NonRelevant, Syn, Germline, LowFreq, LowDepth...) 
-- Extract exome size (bp) 
-- Count total number of variants 
-- Compute the TMB score  
+python pyTMB.py -i ${VCF} --minDepth 100 \
+--filterLowQual \
+--filterNonCoding \
+--filterSplice \
+--filterSyn \
+--filterPolym  --minMAF 0.001 --polymDb 1k,gnomad \
+--effGenomeSize 1590000 > TMB_results.log
 """
-
 
 import cyvcf2 
 #import VCF
@@ -118,7 +112,7 @@ def isPolym(v, infos, flags, val):
     subINFO = subsetINFO(infos, keys=flags)
     for key in subINFO:
         if subINFO[key] is not None and subINFO[key] != ".":
-            if float(subINFO[key]) > float(val):
+            if float(subINFO[key]) >= float(val):
                 return True
     return(False)
 
@@ -217,6 +211,7 @@ def argsParse():
     parser.add_argument("--filterNonSyn", help="Filter Non-Synonymous variants", action="store_true")
     parser.add_argument("--filterCancerHotspot", help="Filter variants annotated as cancer hotspots", action="store_true")
     parser.add_argument("--filterPolym", help="Filter polymorphism or recurrnet variants in genome databases. See --minMAF", action="store_true")
+    parser.add_argument("--filterRecurrence", help="Filter on recurrence values", action="store_true")
     
     ## Databases
     parser.add_argument("--polymDb", help="Databases used for polymorphisms and recurrent variants (comma separated)", default="gnomad")
@@ -225,6 +220,7 @@ def argsParse():
     ## Others
     parser.add_argument("--verbose", action="store_true")
     parser.add_argument("--debug", action="store_true")
+    parser.add_argument("--export", action="store_true")
     parser.add_argument("--version", action='version', version="%(prog)s ("+__version__+")")
 
     
@@ -238,10 +234,14 @@ if __name__ == "__main__":
 
     ## Loading Data
     vcf = cyvcf2.VCF(args.vcf)
+
+    if args.export:
+        wx = cyvcf2.Writer(re.sub(r'\.vcf$|\.vcf.gz$|\.bcf', '_export.vcf', args.vcf), vcf)
+
     if args.debug:
-        vcf.add_info_to_header({'ID': 'DEBUG', 'Description': 'DEBUG FLAGS',                                                                                                                             
+        vcf.add_info_to_header({'ID': 'TMB_FILTERS', 'Description': 'Detected filters for TMB calculation',
                                 'Type':'Character', 'Number': '1'})                                                                                                                                      
-        w = cyvcf2.Writer("output.vcf", vcf)
+        wd = cyvcf2.Writer(re.sub(r'\.vcf$|\.vcf.gz$|\.bcf', '_debug.vcf', args.vcf), vcf)
 
 
     dbconfig = loadConfig(args.dbConfig)
@@ -288,58 +288,58 @@ if __name__ == "__main__":
                     continue
             
             ## Indels
-            if variant.is_indel:
-                debugInfo=debugInfo+"INDEL|"
+            if args.filterIndels and variant.is_indel:
+                debugInfo=",".join([debugInfo, "INDEL"])
                 if not args.debug: 
                     continue
 
             ## Variant Allele Frequency
             fval=getTag(variant, callerflags['freq'])
             if fval is not None and fval < args.minVAF:
-                debugInfo=debugInfo+"VAF|"
+                debugInfo=",".join([debugInfo, "VAF"])
                 if not args.debug: 
                     continue
                 
             ## Sequencing Depth
             dval=getTag(variant, callerflags['depth'])
             if dval is not None and dval < args.minDepth:
-                debugInfo=debugInfo+"DEPTH|"
+                debugInfo=",".join([debugInfo, "DEPTH"])
                 if not args.debug: 
                     continue
 
             ## Variant has a QUAL value or not PASS in the FILTER column
             if args.filterLowQual and (variant.QUAL is not None or variant.FILTER is not None):
-                debugInfo=debugInfo+"QUAL|"
+                debugInfo=",".join([debugInfo, "QUAL"])
                 if not args.debug: 
                     continue
  
             ## Coding variants
             if args.filterCoding and isAnnotatedAs(variant, infos=annotInfo, flags=dbflags['isCoding'], sep=sep):
-                debugInfo=debugInfo+"CODING|"
+                debugInfo=",".join([debugInfo, "CODING"])
                 if not args.debug: 
                     continue
 
             ## Splice variants
             if args.filterSplice and isAnnotatedAs(variant, infos=annotInfo, flags=dbflags['isSplicing'], sep=sep):
-                debugInfo=debugInfo+"SPLICING|"
+                debugInfo=",".join([debugInfo, "SPLICING"])
                 if not args.debug: 
                     continue
 
             ## Non-coding variants
             if args.filterNonCoding and isAnnotatedAs(variant, infos=annotInfo, flags=dbflags['isNonCoding'], sep=sep):
-                debugInfo=debugInfo+"NONCODING|"
+                debugInfo=",".join([debugInfo, "NONCODING"])
                 if not args.debug: 
                     continue 
                 
             ## Synonymous
             if args.filterSyn and isAnnotatedAs(variant, infos=annotInfo, flags=dbflags['isSynonymous'], sep=sep):
-                debugInfo=debugInfo+"SYN|"
+                debugInfo=",".join([debugInfo, "SYN"])
                 if not args.debug: 
                     continue
             
             ## Non synonymous
             if args.filterNonSyn and isAnnotatedAs(variant, infos=annotInfo, flags=dbflags['isNonSynonymous'], sep=sep):
-                debugInfo=debugInfo+"NON_SYN|"
+                debugInfo=",".join([debugInfo, "NON_SYN"])
                 if not args.debug: 
                     continue
 
@@ -352,12 +352,12 @@ if __name__ == "__main__":
                         fdb.append(x)
  
                 if isCancerHotspot(variant, infos=dbInfo, flags=fdb):
-                    debugInfo=debugInfo+"HOTSPOT|"
+                    debugInfo=",".join([debugInfo, "HOTSPOT"])
                     if not args.debug: 
                         continue
 
             ## Polymorphisms
-            if args.filterPolym :
+            if args.filterPolym:
                 ## Flatten list of fields
                 fdb=[]
                 for db in args.polymDb.split(','):
@@ -365,29 +365,40 @@ if __name__ == "__main__":
                         fdb.append(x)
 
                 if isPolym(variant, infos=dbInfo, flags=fdb, val=args.minMAF):
-                    debugInfo=debugInfo+"POLYM|"
+                    debugInfo=",".join([debugInfo, "POLYM"])
                     if not args.debug: 
                         continue
 
+            ## Recurrence
+            if args.filterRecurrence:
+                if isPolym(variant, infos=dbInfo, flags=dbflags['recurrence']['run'], val=0):
+                    debugInfo=",".join([debugInfo, "RUNREC"])
+                    if not args.debug:
+                        continue
+
         except:
-            ## TODO - try to catch different cases or at least to print info to check what's going on and where
-            warnings.warn("Warning ...")
+            warnflag = str(variant.CHROM) + ":" + str(variant.start+1) + "-" + str(variant.end)
+            warnings.warn("Warning : variant ", warnflag, " raises an error. Skipped so far ...")
             raise
 
         ## Still alive
         if debugInfo=="":
             varTMB += 1
+            if args.export:
+              wx.write_record(variant)  
 
         if args.debug:
-            variant.INFO["DEBUG"]=debugInfo
-            w.write_record(variant)
+            variant.INFO["TMB_FILTERS"]=re.sub(r'^,', '', debugInfo)
+            wd.write_record(variant)
 
+    if args.export:
+        wx.close()
     if args.debug:
-        w.close()
+        wd.close()
     vcf.close()
 
     ## Calculate TMB
-    TMB = float(varTMB)/(float(effGS)/1e6)
+    TMB = round(float(varTMB)/(float(effGS)/1e6), 2)
 
     ## Output
     print("pyTMB version=", __version__)

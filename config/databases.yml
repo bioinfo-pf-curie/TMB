@@ -76,6 +76,7 @@ annovar:
   isSplicing:
     Func.refGene:
       - splicing
+      - ncRNA_splicing
 
   isNonCoding:
     Func.refGene:  
@@ -83,6 +84,8 @@ annovar:
     - UTR5
     - UTR3
     - ncRNA_exonic
+    - ncRNA_intronic
+    - ncRNA_splicing
     - upstream
     - intergenic
     - downstream
@@ -107,5 +110,12 @@ annovar:
     gnomad:
       - gnomAD_exome_ALL
 
+    esp:
+      - esp6500siv2_all
+
     exac:
       - ExAC_ALL
+
+  recurrence:
+    run:
+      - RUNREC
