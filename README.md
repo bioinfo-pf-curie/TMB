@@ -15,7 +15,7 @@ Currently, the main limitation of TMB calculation is the lack of standard for it
 
 ### Requirements
 
-The tool was implemented in python3, and require the librairies `cyvcf2` and `yaml`.  
+The tool was implemented in `python3`, and require the librairies `cyvcf2` and `yaml`.  
 We provide a `conda` file to build a simple python environment.  
 To do so, simply use:
 
@@ -34,8 +34,8 @@ The TMB is defined as the number of variants over the size of the genomic region
 
 ```bash
 python bin/pyTMB.py --help
-usage: pyTMB.py [-h] [-i VCF] [-d DBCONFIG] [-c VARCONFIG] [-a ANNOT]
-                [-s CALLER] [--effGenomeSize EFFGENOMESIZE] [--bed BED]
+usage: pyTMB.py [-h] [-i VCF] [-a ANNOT] [-s CALLER] [--dbConfig DBCONFIG]
+                [--varConfig VARCONFIG] [--effGenomeSize EFFGENOMESIZE] [--bed BED]
                 [--minVAF MINVAF] [--minMAF MINMAF] [--minDepth MINDEPTH]
                 [--filterLowQual] [--filterIndels] [--filterCoding]
                 [--filterSplice] [--filterNonCoding] [--filterSyn]
@@ -46,10 +46,12 @@ usage: pyTMB.py [-h] [-i VCF] [-d DBCONFIG] [-c VARCONFIG] [-a ANNOT]
 optional arguments:
   -h, --help                          Show this help message and exit
   -i VCF, --vcf VCF                   Input file (.vcf, .vcf.gz, .bcf)
-  -d DBCONFIG, --dbConfig DBCONFIG    Databases config file
-  -c VARCONFIG, --varConfig VARCONFIG Variant calling config file
   -a ANNOT, --annot ANNOT             Annotation format used in the vcf file
   -s CALLER, --caller CALLER          Caller soft used to generate the vcf file
+  
+  --dbConfig DBCONFIG                 Databases config file
+  --varConfig VARCONFIG               Variant calling config file
+
   --effGenomeSize EFFGENOMESIZE       Effective genome size
   --bed BED                           Capture design to use if effGenomeSize is not defined (BED file)
 
@@ -78,6 +80,43 @@ optional arguments:
 ```
 
 ## Configs
+
+Working with vcf files is usually not straighforward, and mainly depends on the variant caller and annotation tools / databases used.
+In order to make this tool as flexible as possible, we decided to set up two configurations files to defined with field as to be checked and in which case.
+
+The `databases.yml` file described all details about annotation. As an exemple, we provide some configuration for `Annovar` and `snpEff` tool.
+These files can be customized by the user and provided to the script using the `--dbConfig` option.
+
+In the same way, all parameters which are variant caller specific can be set up in another config file (`conf/caller.yml` by default) 
+and can be specified in command line using `--varConfig`.
+
+The `yaml` config files must list the different `keys:values` for each function.
+As an exemple, to assess whether a variant is coding, the programm will used (for `Annovar`);
+
+```
+  isCoding:
+      Func.refGene:
+	        - exonic			
+```
+
+It will therefore search in the `INFO` field the key `Func.refGene` and the value `exonic`.
+
+Regarding the databases, this is the same idea. Here is the list of databases, and fields used to check the `MAF` value by default (for `Annovar`) :
+
+```
+  polymDb:
+      1k:
+        - 1000g2015aug_all
+      gnomad:
+        - gnomAD_exome_ALL
+	  esp:
+	    - esp6500siv2_all
+	  exac:
+	  	  - ExAC_ALL
+```
+
+The user can there choose to scan all databases with the `--polymDb 1k,gnomad,esp,exac` paramater.
+The same is true for the `--cancerDb` parameter.
 
 ## Usage
 
@@ -128,15 +167,15 @@ The fields to scan for each database are defined in the `conf/databases.yml` fil
 Filter on recurrence values (for instance, intra-run occurence). In this case, the vcf file must contains the recurrence information 
 which can be defined the `conf/databases.yml` file.
 
-### Outputs
+## Outputs
 
 By default, the script outputs a few information with the calculated TMB value.
 
-#### `--export`
+### `--export`
 
 This option allows to export a `vcf` file which only contains the variants used for TMB calculation.
 
-#### `--debug`
+### `--debug`
 
 The option allows to export a `vcf` file with the tag `TMB_FILTERS` in the `INFO` field. This tag therefore contains the reason for which a variant would be filtered.
 

@@ -186,12 +186,13 @@ Parse inputs
 def argsParse():
     parser = argparse.ArgumentParser()
     parser.add_argument("-i", "--vcf", help="Input file (.vcf, .vcf.gz, .bcf)")
-    parser.add_argument("-d", "--dbConfig", help="Databases config file", default="./config/databases.yml")
-    parser.add_argument("-c", "--varConfig", help="Variant calling config file", default="./config/calling.yml")
- 
     parser.add_argument("-a", "--annot", help="Annotation format used in the vcf file", default="snpeff")
     parser.add_argument("-s", "--caller", help="Caller soft used to generate the vcf file", default="mutect")
 
+    ## Configs
+    parser.add_argument("--dbConfig", help="Databases config file", default="./config/databases.yml")
+    parser.add_argument("--varConfig", help="Variant calling config file", default="./config/calling.yml")
+ 
     ## Efective genome size
     parser.add_argument("--effGenomeSize", help="Effective genome size", type=int, default=None)
     parser.add_argument("--bed", help="Capture design to use if effGenomeSize is not defined (BED file)", default=None)
@@ -220,7 +221,7 @@ def argsParse():
     ## Others
     parser.add_argument("--verbose", action="store_true")
     parser.add_argument("--debug", action="store_true")
-    parser.add_argument("--export", action="store_true")
+    parser.add_argument("--export", help="", action="store_true")
     parser.add_argument("--version", action='version', version="%(prog)s ("+__version__+")")
 
     
