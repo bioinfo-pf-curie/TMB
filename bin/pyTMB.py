@@ -144,8 +144,9 @@ def subsetINFO(annot, keys):
 
 """
 Format the INFO field from snpEff and return a list of dict
+ie. snpEff
 """
-def snpEff2dl(INFO):
+def infoTag2dl(INFO):
 
     if INFO is not None:
         annotTag = INFO.split(',')                                                                                                                                       
@@ -158,8 +159,9 @@ def snpEff2dl(INFO):
 
 """
 Format the INFO field from ANNOVAR and return a list of dict
+ie. annovar
 """
-def annovar2dl(INFO):
+def info2dl(INFO):
 
     if INFO is not None:
         return [dict(INFO)]
@@ -172,7 +174,7 @@ def getTag(v, tag):
     ## First check in FORMAT field
     if tag in variant.FORMAT:
         val=variant.format(tag)
-        if val < 0:
+        if float(val) < 0:
             val=None
 
     ## Otherwise, check in INFO field
@@ -190,8 +192,6 @@ Parse inputs
 def argsParse():
     parser = argparse.ArgumentParser()
     parser.add_argument("-i", "--vcf", help="Input file (.vcf, .vcf.gz, .bcf)")
-    parser.add_argument("-a", "--annot", help="Annotation format used in the vcf file", default="snpeff")
-    parser.add_argument("-s", "--caller", help="Caller soft used to generate the vcf file", default="mutect")
 
     ## Configs
     parser.add_argument("--dbConfig", help="Databases config file", default="./config/databases.yml")
@@ -249,11 +249,8 @@ if __name__ == "__main__":
         wd = cyvcf2.Writer(re.sub(r'\.vcf$|\.vcf.gz$|\.bcf', '_debug.vcf', os.path.basename(args.vcf)), vcf)
 
 
-    dbconfig = loadConfig(args.dbConfig)
-    dbflags = dbconfig[args.annot]
-
-    varconfig = loadConfig(args.varConfig)
-    callerflags = varconfig[args.caller]
+    dbFlags = loadConfig(args.dbConfig)
+    callerFlags = loadConfig(args.varConfig)
 
     varCounter = 0
     varTMB = 0
@@ -280,12 +277,13 @@ if __name__ == "__main__":
             debugInfo=""
 
             ## Get annotation INFO as a list of dict
-            if args.annot == "snpeff":
-                annotInfo = snpEff2dl(variant.INFO.get(dbflags['tag']))
-            elif args.annot == "annovar" :
-                annotInfo = annovar2dl(variant.INFO)
+            if dbFlags['tag'] != '':
+                annotInfo = infoTag2dl(variant.INFO.get(dbFlags['tag']))
+            else:
+                annotInfo = info2dl(variant.INFO)
             
-            sep = dbflags['sep'] 
+            ## Field separator
+            sep = dbFlags['sep'] 
 
             ## No INFO field
             if dbInfo is None or annotInfo is None:
@@ -298,14 +296,14 @@ if __name__ == "__main__":
                     continue
 
             ## Variant Allele Frequency
-            fval=getTag(variant, callerflags['freq'])
+            fval=getTag(variant, callerFlags['freq'])
             if fval is not None and fval < args.minVAF:
                 debugInfo=",".join([debugInfo, "VAF"])
                 if not args.debug: 
                     continue
                 
             ## Sequencing Depth
-            dval=getTag(variant, callerflags['depth'])
+            dval=getTag(variant, callerFlags['depth'])
             if dval is not None and dval < args.minDepth:
                 debugInfo=",".join([debugInfo, "DEPTH"])
                 if not args.debug: 
@@ -318,31 +316,31 @@ if __name__ == "__main__":
                     continue
  
             ## Coding variants
-            if args.filterCoding and isAnnotatedAs(variant, infos=annotInfo, flags=dbflags['isCoding'], sep=sep):
+            if args.filterCoding and isAnnotatedAs(variant, infos=annotInfo, flags=dbFlags['isCoding'], sep=sep):
                 debugInfo=",".join([debugInfo, "CODING"])
                 if not args.debug: 
                     continue
 
             ## Splice variants
-            if args.filterSplice and isAnnotatedAs(variant, infos=annotInfo, flags=dbflags['isSplicing'], sep=sep):
+            if args.filterSplice and isAnnotatedAs(variant, infos=annotInfo, flags=dbFlags['isSplicing'], sep=sep):
                 debugInfo=",".join([debugInfo, "SPLICING"])
                 if not args.debug: 
                     continue
 
             ## Non-coding variants
-            if args.filterNonCoding and isAnnotatedAs(variant, infos=annotInfo, flags=dbflags['isNonCoding'], sep=sep):
+            if args.filterNonCoding and isAnnotatedAs(variant, infos=annotInfo, flags=dbFlags['isNonCoding'], sep=sep):
                 debugInfo=",".join([debugInfo, "NONCODING"])
                 if not args.debug: 
                     continue 
                 
             ## Synonymous
-            if args.filterSyn and isAnnotatedAs(variant, infos=annotInfo, flags=dbflags['isSynonymous'], sep=sep):
+            if args.filterSyn and isAnnotatedAs(variant, infos=annotInfo, flags=dbFlags['isSynonymous'], sep=sep):
                 debugInfo=",".join([debugInfo, "SYN"])
                 if not args.debug: 
                     continue
             
             ## Non synonymous
-            if args.filterNonSyn and isAnnotatedAs(variant, infos=annotInfo, flags=dbflags['isNonSynonymous'], sep=sep):
+            if args.filterNonSyn and isAnnotatedAs(variant, infos=annotInfo, flags=dbFlags['isNonSynonymous'], sep=sep):
                 debugInfo=",".join([debugInfo, "NON_SYN"])
                 if not args.debug: 
                     continue
@@ -352,7 +350,7 @@ if __name__ == "__main__":
                 ## Flatten list of fields
                 fdb=[]
                 for db in args.cancerDb.split(','):
-                    for x in dbflags['cancerDb'][db]:
+                    for x in dbFlags['cancerDb'][db]:
                         fdb.append(x)
  
                 if isCancerHotspot(variant, infos=dbInfo, flags=fdb):
@@ -365,7 +363,7 @@ if __name__ == "__main__":
                 ## Flatten list of fields
                 fdb=[]
                 for db in args.polymDb.split(','):
-                    for x in dbflags['polymDb'][db]:
+                    for x in dbFlags['polymDb'][db]:
                         fdb.append(x)
 
                 if isPolym(variant, infos=dbInfo, flags=fdb, val=args.minMAF):
@@ -375,7 +373,7 @@ if __name__ == "__main__":
 
             ## Recurrence
             if args.filterRecurrence:
-                if isPolym(variant, infos=dbInfo, flags=dbflags['recurrence']['run'], val=0):
+                if isPolym(variant, infos=dbInfo, flags=dbFlags['recurrence']['run'], val=0):
                     debugInfo=",".join([debugInfo, "RUNREC"])
                     if not args.debug:
                         continue
@@ -410,8 +408,6 @@ if __name__ == "__main__":
     print("")
     print("Config caller=", args.varConfig)
     print("Config databases=", args.dbConfig)
-    print("Variant caller=", args.caller)
-    print("Annotation tool=", args.annot)
     print("")
     print("Filters:")
     print("-------")

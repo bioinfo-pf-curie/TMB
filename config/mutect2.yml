@@ -4,11 +4,6 @@
 ##
 ###############################################
 
-mutect:
-  freq: 'AF'
-  depth: 'DP'
-
-varscan:
-  freq: 'ALLELIC_RATIO'
-  depth: 'DP'
+freq: 'AF'
+depth: 'DP'
 

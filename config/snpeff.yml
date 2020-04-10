@@ -1,0 +1,58 @@
+## Describe the fields
+## For definition, provide the expected key:values
+## Note that several keys/values can be defined
+
+###############################################
+## SnpEff Parsing
+
+## Tags
+tag: 'ANN'
+sep: '&'
+
+## Annotation flags
+isCoding:
+  1:
+    - intragenic_variant
+
+isNonCoding:
+  1:
+    - intergenic_region
+    - intron_variant
+    - upstream_gene_variant
+    - 5_prime_UTR_variant
+    - 3_prime_UTR_variant
+
+isSplicing:
+  1:
+    - splice_donor_variant
+    - splice_acceptor_variant
+    - splice_region_variant
+
+isSynonymous:
+  1:
+    - synonymous_variant
+  
+isNonSynonymous:
+  1:
+    - missense_variant
+    - initiator_codon_variant
+    - stop_retained_variant
+    - stop_gained
+
+## Databases
+cancerDb:
+  cosmic:
+    - cosmic_coding_ID
+    - cosmic_noncoding_ID
+
+polymDb:
+  1k:
+    - kg_AMR_AF
+    - kg_AFR_AF
+    - kg_EAS_AF
+    - kg_EUR_AF
+    - kg_SAS_AF
+
+  gnomad:
+    - gnomAD_genomes_AF
+

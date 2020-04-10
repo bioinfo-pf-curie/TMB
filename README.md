@@ -34,8 +34,8 @@ The TMB is defined as the number of variants over the size of the genomic region
 
 ```bash
 python bin/pyTMB.py --help
-usage: pyTMB.py [-h] [-i VCF] [-a ANNOT] [-s CALLER] [--dbConfig DBCONFIG]
-                [--varConfig VARCONFIG] [--effGenomeSize EFFGENOMESIZE] [--bed BED]
+usage: pyTMB.py [-h] [-i VCF] [--dbConfig DBCONFIG] [--varConfig VARCONFIG] 
+                [--effGenomeSize EFFGENOMESIZE] [--bed BED]
                 [--minVAF MINVAF] [--minMAF MINMAF] [--minDepth MINDEPTH]
                 [--filterLowQual] [--filterIndels] [--filterCoding]
                 [--filterSplice] [--filterNonCoding] [--filterSyn]
@@ -46,9 +46,6 @@ usage: pyTMB.py [-h] [-i VCF] [-a ANNOT] [-s CALLER] [--dbConfig DBCONFIG]
 optional arguments:
   -h, --help                          Show this help message and exit
   -i VCF, --vcf VCF                   Input file (.vcf, .vcf.gz, .bcf)
-  -a ANNOT, --annot ANNOT             Annotation format used in the vcf file
-  -s CALLER, --caller CALLER          Caller soft used to generate the vcf file
-  
   --dbConfig DBCONFIG                 Databases config file
   --varConfig VARCONFIG               Variant calling config file
 
@@ -82,22 +79,22 @@ optional arguments:
 ## Configs
 
 Working with vcf files is usually not straighforward, and mainly depends on the variant caller and annotation tools/databases used.
-In order to make this tool as flexible as possible, we decided to set up **two configurations files** to defined with field as to be checked and in which case.
+In order to make this tool as flexible as possible, we decided to set up **two configurations files** to defined with fields as to be checked and in which case.
 
-The `databases.yml` file described all details about annotation. As an exemple, we provide some configurations for **Annovar** and **snpEff** tool.  
-The configuration to used must be specified using the `--annot` paramter.  
-These files can be customized by the user and provided to the script using the `--dbConfig` option.
+The `--dbConfig` file described all details about annotation. As an exemple, we provide some configurations for **Annovar** (*conf/annovar.yml*) 
+and **snpEff** (*conf/snpeff.yaml*) tool.  
+These files can be customized by the user.
 
-In the same way, all parameters which are variant caller specific can be set up in another config file (`conf/caller.yml` by default or any file from the 
-`--varConfig` parameter) and specified using the `--caller` paramter.  
+In the same way, all parameters which are variant caller specific can be set up in another config file using the `--varConfig` parameter.
+Config files for **Varscan2** (*conf/varscan2.yml*) and **Mutect2** (*conf/mutect2.yml*) are provided as examples.
 
 The `yaml` config files must list the different **keys:values** for each function.
 As an exemple, to assess whether a variant is coding, the programm will used (for Annovar);
 
 ```
-  isCoding:
-    Func.refGene:
-      - exonic			
+isCoding:
+  Func.refGene:
+    - exonic			
 ```
 
 It will therefore search in the `INFO` field the key `Func.refGene` and the value `exonic`.
@@ -105,15 +102,15 @@ It will therefore search in the `INFO` field the key `Func.refGene` and the valu
 Regarding the databases, this is the same idea. Here is the list of databases, and fields used to check the `MAF` value by default (for Annovar) :
 
 ```
-  polymDb:
-      1k:
-        - 1000g2015aug_all
-      gnomad:
-        - gnomAD_exome_ALL
-      esp:
-        - esp6500siv2_all
-      exac:
-       - ExAC_ALL
+polymDb:
+    1k:
+      - 1000g2015aug_all
+    gnomad:
+      - gnomAD_exome_ALL
+    esp:
+      - esp6500siv2_all
+    exac:
+     - ExAC_ALL
 ```
 
 The user can thus choose to scan all databases with the `--polymDb 1k,gnomad,esp,exac` parameter.  
@@ -193,7 +190,9 @@ Let's calculated the TMB on a gene panel vcf file (coding size = 1.9Mb, caller =
 In this case, a typical usage would be :
 
 ```
-python pyTMB.py -i ${VCF} --annot annovar --caller varscan \
+python pyTMB.py -i ${VCF} \
+--dbConfig conf/annovar.yml \
+--varConfig conf/varscan.yml \
 --minDepth 100 \
 --filterLowQual \
 --filterNonCoding \

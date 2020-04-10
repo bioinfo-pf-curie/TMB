@@ -4,7 +4,7 @@
 # TMB4 : SNVs+Indels PASS - splicing - Saved + 10% allelic ratio
 
 ## Filters: nonCoding, splicing, syn, polym, recurrent, low_depth
-configs="--caller varscan --annot annovar --dbConfig /data/users/nservant/GitLab/tmb/config/databases.yml --varConfig /data/users/nservant/GitLab/tmb/config/calling.yml"
+configs="--dbConfig /data/users/nservant/GitLab/tmb/config/annovar.yml --varConfig /data/users/nservant/GitLab/tmb/config/varscan2.yml"
 filters="--minDepth 100 --filterNonCoding --filterSplice --filterSyn --filterPolym --filterLowQual --filterRecurrence --minMAF 0.001 --polymDb 1k,gnomad,esp,exac --effGenomeSize 1590000"
 
 RUN=D320
