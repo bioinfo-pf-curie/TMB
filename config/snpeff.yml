@@ -55,4 +55,4 @@ polymDb:
 
   gnomad:
     - gnomAD_genomes_AF
-
+    - gnomAD_exomes_AF

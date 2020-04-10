@@ -1,11 +1,12 @@
 #!/bin/bash
 
-python ./bin/pyTMB.py -i /data/tmp/tgutman/SeqOIA/TMB/MAP586_cancer_04022020_wes_only.vcf \
+time python /data/users/nservant/GitLab/tmb/bin/pyTMB.py -i /data/tmp/tgutman/SeqOIA/TMB/MAP586_cancer_04022020_wes_only.vcf \
+--dbConfig /data/users/nservant/GitLab/tmb/config/snpeff.yml \
+--varConfig /data/users/nservant/GitLab/tmb/config/mutect2.yml \
 --filterNonCoding \
 --filterSplice \
 --filterSyn \
---filterPolym --polymDb 1k,gnomad\
+--filterPolym --polymDb 1k,gnomad \
 --filterLowQual \
 --effGenomeSize 50000000 \
---caller mutect --annot snpeff \
---dbConfig /data/users/nservant/GitLab/tmb/config/databases.yml --varConfig /data/users/nservant/GitLab/tmb/config/calling.yml --debug --verbose
+--debug --export

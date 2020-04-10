@@ -268,8 +268,8 @@ if __name__ == "__main__":
         varCounter+=1
         if (varCounter % 1000 == 0 and args.verbose):
             print ("## ",varCounter)
-            if args.debug and varCounter == 100000:
-                sys.exit()
+            #if args.debug and varCounter == 100000:
+            #    sys.exit()
 
         try:
             ## All vcf INFO
