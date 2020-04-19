@@ -22,7 +22,7 @@ isSplicing:
     - ncRNA_splicing
 
 isNonCoding:
-  Func.refGene:  
+  Func.refGene:
     - intronic
     - UTR5
     - UTR3
@@ -38,7 +38,7 @@ isSynonymous:
     - synonymous_SNV
 
 isNonSynonymous:
-  ExonicFunc.refGene
+  ExonicFunc.refGene:
     - nonsynonymous_SNV
 
 ## Databases

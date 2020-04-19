@@ -76,7 +76,7 @@ def getEffGenomeSizeFromBed(infile, verbose=False):
         intl = abs(int(end) - int(start))
         effgs += intl
     
-    bed_handle.close()
+    bedhandle.close()
     return effgs
 
 
