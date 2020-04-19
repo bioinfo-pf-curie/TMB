@@ -1,0 +1,69 @@
+## Describe the fields
+## For definition, provide the expected key:values
+## Note that several keys/values can be defined
+
+###############################################
+
+#################################################
+## ANNOVAR
+
+## Tags
+tag: ''
+sep: '\x3b'
+
+## Annotation flags
+isCoding:
+  Func.refGene_102015:
+    - exonic
+
+isSplicing:
+  Func.refGene_102015:
+    - splicing
+    - ncRNA_splicing
+
+isNonCoding:
+  Func.refGene_102015:
+    - intronic
+    - UTR5
+    - UTR3
+    - ncRNA_exonic
+    - ncRNA_intronic
+    - ncRNA_splicing
+    - upstream
+    - intergenic
+    - downstream
+
+isSynonymous:
+  ExonicFunc.refGene_102015:
+    - synonymous_SNV
+
+isNonSynonymous:
+  ExonicFunc.refGene_102015:
+    - nonsynonymous_SNV
+    - frameshift_insertion
+    - frameshift_deletion
+    - frameshift_block_substitution
+    - stopgain
+    - stopgain
+
+## Databases
+cancerDb:
+  cosmic:
+    - cosmic86
+
+polymDb:
+  1k:
+    - 1000g2015aug_all
+
+  gnomad:
+    - gnomAD_exome_ALL
+
+  esp:
+    - esp6500siv2_all
+
+  exac:
+    - ExAC_ALL
+
+recurrence:
+  run:
+    - RUNREC
