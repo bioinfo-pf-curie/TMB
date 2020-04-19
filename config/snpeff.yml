@@ -12,15 +12,43 @@ sep: '&'
 ## Annotation flags
 isCoding:
   1:
-    - intragenic_variant
+    - initiator_codon_variant
+    - start_retained_variant
+    - stop_retained_variant
+    - synonymous variant
+    - coding_sequence_variant
+    - exon_variant
+    - (gene_variant)
+    - NMD_transcript_variant
+    - transcript_amplification
+    - transcript_variant
+    - exon_loss_variant
+    - coding_sequence_variant
+    - conservative_inframe_deletion
+    - conservative_inframe_insertion
+    - disruptive_inframe_deletion
+    - disruptive_inframe_insertion
+    - missense_variant
+    - frameshift_variant
+    - rare_amino_acid_variant
+    - stop_gained
+    - stop_lost
+    - transcript_ablation
 
 isNonCoding:
   1:
-    - intergenic_region
-    - intron_variant
-    - upstream_gene_variant
-    - 5_prime_UTR_variant
+    - 5_prime_UTR_premature_start_codon_gain_variant
     - 3_prime_UTR_variant
+    - 5_prime_UTR_variant
+    - conserved_intergenic_variant
+    - conserved_intron_variant
+    - downstream_gene_variant
+    - intergenic_region
+    - intragenic_variant
+    - intron_variant
+    - non_coding_transcript_exon_variant
+    - non_coding_transcript_variant
+    - miRNA
 
 isSplicing:
   1:
@@ -30,14 +58,20 @@ isSplicing:
 
 isSynonymous:
   1:
-    - synonymous_variant
-  
+    - start_retained_variant
+    - stop_retained_variant
+    - synonymous variant
+
+
 isNonSynonymous:
   1:
+    - 5_prime_UTR_premature_start_codon_gain_variant
     - missense_variant
-    - initiator_codon_variant
-    - stop_retained_variant
+    - rare_amino_acid_variant
+    - start_lost
     - stop_gained
+    - stop_lost
+
 
 ## Databases
 cancerDb:
@@ -55,4 +89,3 @@ polymDb:
 
   gnomad:
     - gnomAD_genomes_AF
-    - gnomAD_exomes_AF
