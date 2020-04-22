@@ -124,44 +124,44 @@ The same is true for the `--cancerDb` parameter.
 Filter variants with Allelic Ratio < minVAF. Note the field used to get the Allelic Ratio field is defined in the *conf/caller.yml* file.
 In this case, the programm will first look for this information in the **FORMAT** field, and then in the **INFO** field.
 
-### `--minMAF MINMAF`
+#### `--minMAF MINMAF`
 Filter variants with MAF < minMAF. Note the databases used to check the Min Allele Frequency are set using the `--polymDb` 
 parameters and the *conf/databases.yml* file.
 
-### `--minDepth MINDEPTH`
+#### `--minDepth MINDEPTH`
 Filter variants with depth < minDepth. Note the field used to get the depth is defined in the *conf/caller.yml* file. 
 In this case, the programm will first look for this information in the **FORMAT** field, and then in the **INFO** field. 
 
-### `--filterLowQual`
+#### `--filterLowQual`
 Filter variants for which is the **FILTER** field is not **PASS** or for which the **QUAL** value is not null.
 
-### ` --filterIndels`
+#### ` --filterIndels`
 Filter insertions/deletions variants.
 
-### `--filterCoding`
+#### `--filterCoding`
 Filter Coding variants as defined in the *conf/databases.yml* field.
 
-### `--filterSplice`
+#### `--filterSplice`
 Filter Splice variants as defined in the *conf/databases.yml* field.
 
-### `--filterNonCoding`
+#### `--filterNonCoding`
 Filter Non-coding variants as defined in the *conf/databases.yml* field.
 
-### `--filterSyn`
+#### `--filterSyn`
 Filter Synonymous variants as defined in the *conf/databases.yml* field.
 
-### `--filterNonSyn`
+#### `--filterNonSyn`
 Filter Non-Synonymous variants as defined in the *conf/databases.yml* field.
 
-### `--filterCancerHotspot`
+#### `--filterCancerHotspot`
 Filter variants annotated as cancer hotspots as defined in the *conf/databases.yml* field.
 So far, all variants with a 'cancer' annotation (for instance with a COSMIC Id) will be removed.
 
-### `--filterPolym`
+#### `--filterPolym`
 Filter polymorphism variants from genome databases. The databases to considered can be listed with the `--polymDb` parameter.
 The fields to scan for each database are defined in the *conf/databases.yml* file and the population frequency is compared with the `--minMAF` field.
 
-### `--filterRecurrence`
+#### `--filterRecurrence`
 Filter on recurrence values (for instance, intra-run occurence). In this case, the vcf file must contains the recurrence information 
 which can be defined the *conf/databases.yml* file.
 
@@ -169,11 +169,11 @@ which can be defined the *conf/databases.yml* file.
 
 By default, the script outputs a few information with the calculated TMB value.
 
-### `--export`
+#### `--export`
 
 This option allows to export a vcf file which only contains the variants used for TMB calculation.
 
-### `--debug`
+#### `--debug`
 
 The option allows to export a vcf file with the tag **TMB_FILTERS** in the **INFO** field. This tag therefore contains the reason for which a variant would be filtered.
 
