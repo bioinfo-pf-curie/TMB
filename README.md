@@ -180,7 +180,7 @@ The option allows to export a vcf file with the tag **TMB_FILTERS** in the **INF
 
 ## Examples
 
-Let's calculated the TMB on a gene panel vcf file (coding size = 1.9Mb, caller = varscan, annotation = Annovar) as the following variants : 
+Let's calculated the TMB on a gene panel vcf file (coding size = 1.9Mb, caller = varscan, annotation = Annovar) with the following criteria: 
 - PASS
 - minDepth at 100X
 - non-synonymous
