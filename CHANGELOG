@@ -1,4 +1,11 @@
 *************************************
+CHANGES IN VERSION 1.2.0
+
+SIGNIFICANT USER CHANGES
+
+   o Add parameter `--minAltDepth`
+
+*************************************
 CHANGES IN VERSION 1.1.0
 
 SIGNIFICANT USER CHANGES

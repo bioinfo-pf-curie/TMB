@@ -14,7 +14,7 @@
 #
 ##############################################################################
 
-__version__ = '1.1.0'
+__version__='1.2.0'
 
 """
 This script is designed to calculate a TMB score from a VCF file.
@@ -355,7 +355,6 @@ if __name__ == "__main__":
             # Alternative allele Depth
             ad = variant.format('AD')
             if ad is not None and len(ad[0]) == 2 and ad[0][1] < args.minAltDepth:
-                print(ad)
                 debugInfo = ",".join([debugInfo, "ALTDEPTH"])
                 if not args.debug:
                     continue
@@ -465,6 +464,7 @@ if __name__ == "__main__":
     print("minVAF=", args.minVAF)
     print("minMAF=", args.minMAF)
     print("minDepth=", args.minDepth)
+    print("minAltDepth=", args.minAltDepth)
     print("filterLowQual=", args.filterLowQual)
     print("filterIndels=", args.filterIndels)
     print("filterCoding=", args.filterCoding)

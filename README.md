@@ -36,7 +36,7 @@ The TMB is defined as the number of variants over the size of the genomic region
 python bin/pyTMB.py --help
 usage: pyTMB.py [-h] [-i VCF] [--dbConfig DBCONFIG] [--varConfig VARCONFIG] 
                 [--effGenomeSize EFFGENOMESIZE] [--bed BED]
-                [--minVAF MINVAF] [--minMAF MINMAF] [--minDepth MINDEPTH]
+                [--minVAF MINVAF] [--minMAF MINMAF] [--minDepth MINDEPTH] [--minAltDepth MINALTDEPTH]
                 [--filterLowQual] [--filterIndels] [--filterCoding]
                 [--filterSplice] [--filterNonCoding] [--filterSyn]
                 [--filterNonSyn] [--filterCancerHotspot] [--filterPolym]
@@ -55,6 +55,7 @@ optional arguments:
   --minVAF MINVAF                     Filter variants with Allelic Ratio < minVAF
   --minMAF MINMAF                     Filter variants with MAF < minMAF
   --minDepth MINDEPTH                 Filter variants with depth < minDepth
+  --minAltDepth MINALTDEPTH           FIlter alternative allele with depth < minAltDepth
   --filterLowQual                     Filter low quality (i.e not PASS) variant
   --filterIndels                      Filter insertions/deletions
   --filterCoding                      Filter Coding variants
@@ -124,44 +125,47 @@ The same is true for the `--cancerDb` parameter.
 Filter variants with Allelic Ratio < minVAF. Note the field used to get the Allelic Ratio field is defined in the *conf/caller.yml* file.
 In this case, the programm will first look for this information in the **FORMAT** field, and then in the **INFO** field.
 
-### `--minMAF MINMAF`
+#### `--minMAF MINMAF`
 Filter variants with MAF < minMAF. Note the databases used to check the Min Allele Frequency are set using the `--polymDb` 
 parameters and the *conf/databases.yml* file.
 
-### `--minDepth MINDEPTH`
+#### `--minDepth MINDEPTH`
 Filter variants with depth < minDepth. Note the field used to get the depth is defined in the *conf/caller.yml* file. 
 In this case, the programm will first look for this information in the **FORMAT** field, and then in the **INFO** field. 
 
-### `--filterLowQual`
+#### `--minAltDepth MINALTDEPTH`
+FIlter alternative allele with depth < minAltDepth. The programm will look in the **FORMAT** field exclusively.
+
+#### `--filterLowQual`
 Filter variants for which is the **FILTER** field is not **PASS** or for which the **QUAL** value is not null.
 
-### ` --filterIndels`
+#### ` --filterIndels`
 Filter insertions/deletions variants.
 
-### `--filterCoding`
+#### `--filterCoding`
 Filter Coding variants as defined in the *conf/databases.yml* field.
 
-### `--filterSplice`
+#### `--filterSplice`
 Filter Splice variants as defined in the *conf/databases.yml* field.
 
-### `--filterNonCoding`
+#### `--filterNonCoding`
 Filter Non-coding variants as defined in the *conf/databases.yml* field.
 
-### `--filterSyn`
+#### `--filterSyn`
 Filter Synonymous variants as defined in the *conf/databases.yml* field.
 
-### `--filterNonSyn`
+#### `--filterNonSyn`
 Filter Non-Synonymous variants as defined in the *conf/databases.yml* field.
 
-### `--filterCancerHotspot`
+#### `--filterCancerHotspot`
 Filter variants annotated as cancer hotspots as defined in the *conf/databases.yml* field.
 So far, all variants with a 'cancer' annotation (for instance with a COSMIC Id) will be removed.
 
-### `--filterPolym`
+#### `--filterPolym`
 Filter polymorphism variants from genome databases. The databases to considered can be listed with the `--polymDb` parameter.
 The fields to scan for each database are defined in the *conf/databases.yml* file and the population frequency is compared with the `--minMAF` field.
 
-### `--filterRecurrence`
+#### `--filterRecurrence`
 Filter on recurrence values (for instance, intra-run occurence). In this case, the vcf file must contains the recurrence information 
 which can be defined the *conf/databases.yml* file.
 
@@ -169,18 +173,18 @@ which can be defined the *conf/databases.yml* file.
 
 By default, the script outputs a few information with the calculated TMB value.
 
-### `--export`
+#### `--export`
 
 This option allows to export a vcf file which only contains the variants used for TMB calculation.
 
-### `--debug`
+#### `--debug`
 
 The option allows to export a vcf file with the tag **TMB_FILTERS** in the **INFO** field. This tag therefore contains the reason for which a variant would be filtered.
 
 
 ## Examples
 
-Let's calculated the TMB on a gene panel vcf file (coding size = 1.9Mb, caller = varscan, annotation = Annovar) as the following variants : 
+Let's calculated the TMB on a gene panel vcf file (coding size = 1.9Mb, caller = varscan, annotation = Annovar) with the following criteria: 
 - PASS
 - minDepth at 100X
 - non-synonymous
