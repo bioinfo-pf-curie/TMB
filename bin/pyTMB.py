@@ -14,7 +14,7 @@
 #
 ##############################################################################
 
-__version__='1.2.0'
+__version__ = '1.2.0'
 
 """
 This script is designed to calculate a TMB score from a VCF file.
@@ -46,6 +46,7 @@ import sys
 import warnings
 import re
 import yaml
+import numpy as np
 import os.path
 from datetime import date
 def loadConfig(infile):
@@ -198,15 +199,17 @@ def getTag(v, tag):
     # First check in FORMAT field
     if tag in variant.FORMAT:
         val = variant.format(tag)
-        if float(val) < 0:
-            val = None
+        if np.shape(val) == (1, 1):
+            if val < 0:
+                val = None
 
     # Otherwise, check in INFO field
     if tag not in variant.FORMAT or val is None:
         val = variant.INFO.get(tag)
 
-    if val is not None:
-        val = float(val)
+    if np.shape(val) == (1, 1):
+        if val is not None:
+            val = float(val)
 
     return(val)
 
@@ -353,7 +356,7 @@ if __name__ == "__main__":
                     continue
 
             # Alternative allele Depth
-            ad = variant.format('AD')
+            ad = getTag(variant, callerFlags['altDepth'])
             if ad is not None and len(ad[0]) == 2 and ad[0][1] < args.minAltDepth:
                 debugInfo = ",".join([debugInfo, "ALTDEPTH"])
                 if not args.debug:
