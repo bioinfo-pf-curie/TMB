@@ -343,6 +343,10 @@ if __name__ == "__main__":
 
             # Variant Allele Frequency
             fval = getTag(variant, callerFlags['freq'])
+            if type(fval) == np.ndarray:
+                debugInfo = ",".join([debugInfo, "MULTI_VAF"])
+                if not args.debug:
+                    continue
             if fval is not None and fval < args.minVAF:
                 debugInfo = ",".join([debugInfo, "VAF"])
                 if not args.debug:
