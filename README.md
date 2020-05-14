@@ -7,7 +7,7 @@
 
 This tool was designed to calculate a **Tumor Mutational Burden (TMB)** score from a VCF file.
 
-The TMB is usually defined as the total number of non-synonymous mutations per coding area of a tumor genome. This metric is mainly used as a biomarker in clinical practice to determine whether to use or not immunomodulatory anticancer drugs (immune checkpoint inhibitors such as Nivolumab). Whole Exome Sequencing (WES) allows comprehensive measurement of TMB and is considered the gold standard. In practice, as TMB is mainly used in the routine of the clinic, and due to the high cost of WES, TMB calculation based on gene panels is preferred. 
+The TMB is usually defined as the total number of non-synonymous mutations per coding area of a tumor genome. This metric is mainly used as a biomarker in clinical practice to determine whether to use or not immunomodulatory anticancer drugs (immune checkpoint inhibitors such as Nivolumab). Whole Exome Sequencing (WES) allows comprehensive measurement of TMB and is considered the gold standard. In practice, as TMB is mainly used in the routine of the clinic, and due to the high cost of WES, TMB calculation based on gene panels is preferred.
 
 Currently, the main limitation of TMB calculation is the lack of standard for its calculation. Therefore, we decided to propose a very **versatile** tool allowing the user to define exactly which type of variants to use or filter.
 
@@ -34,9 +34,9 @@ The TMB is defined as the number of variants over the size of the genomic region
 
 ```bash
 python bin/pyTMB.py --help
-usage: pyTMB.py [-h] [-i VCF] [--dbConfig DBCONFIG] [--varConfig VARCONFIG] 
+usage: pyTMB.py [-h] [-i VCF] [--dbConfig DBCONFIG] [--varConfig VARCONFIG]
                 [--effGenomeSize EFFGENOMESIZE] [--bed BED]
-                [--minVAF MINVAF] [--minMAF MINMAF] [--minDepth MINDEPTH] [--minAltDepth MINALTDEPTH]
+                [--vaf MINVAF] [--maf MINMAF] [--minDepth MINDEPTH] [--minAltDepth MINALTDEPTH]
                 [--filterLowQual] [--filterIndels] [--filterCoding]
                 [--filterSplice] [--filterNonCoding] [--filterSyn]
                 [--filterNonSyn] [--filterCancerHotspot] [--filterPolym]
@@ -66,15 +66,15 @@ optional arguments:
   --filterCancerHotspot               Filter variants annotated as cancer hotspots
   --filterPolym                       Filter polymorphism variants in genome databases. See --minMAF
   --filterRecurrence                  Filter on recurrence values
-  
+
   --polymDb POLYMDB                   Databases used for polymorphisms detection (comma separated)
   --cancerDb CANCERDB                 Databases used for cancer hotspot annotation (comma separated)
-  
+
   --verbose
   --debug
   --export
   --version
-		  
+
 ```
 
 ## Configs
@@ -82,7 +82,7 @@ optional arguments:
 Working with vcf files is usually not straighforward, and mainly depends on the variant caller and annotation tools/databases used.
 In order to make this tool as flexible as possible, we decided to set up **two configurations files** to defined with fields as to be checked and in which case.
 
-The `--dbConfig` file described all details about annotation. As an exemple, we provide some configurations for **Annovar** (*conf/annovar.yml*) 
+The `--dbConfig` file described all details about annotation. As an exemple, we provide some configurations for **Annovar** (*conf/annovar.yml*)
 and **snpEff** (*conf/snpeff.yaml*) tool.  
 These files can be customized by the user.
 
@@ -121,17 +121,17 @@ The same is true for the `--cancerDb` parameter.
 
 ### Filters
 
-#### `--minVAF MINVAF`
+#### `--vaf MINVAF`
 Filter variants with Allelic Ratio < minVAF. Note the field used to get the Allelic Ratio field is defined in the *conf/caller.yml* file.
 In this case, the programm will first look for this information in the **FORMAT** field, and then in the **INFO** field.
 
-#### `--minMAF MINMAF`
-Filter variants with MAF < minMAF. Note the databases used to check the Min Allele Frequency are set using the `--polymDb` 
+#### `--maf MINMAF`
+Filter variants with MAF < minMAF. Note the databases used to check the Min Allele Frequency are set using the `--polymDb`
 parameters and the *conf/databases.yml* file.
 
 #### `--minDepth MINDEPTH`
-Filter variants with depth < minDepth. Note the field used to get the depth is defined in the *conf/caller.yml* file. 
-In this case, the programm will first look for this information in the **FORMAT** field, and then in the **INFO** field. 
+Filter variants with depth < minDepth. Note the field used to get the depth is defined in the *conf/caller.yml* file.
+In this case, the programm will first look for this information in the **FORMAT** field, and then in the **INFO** field.
 
 #### `--minAltDepth MINALTDEPTH`
 FIlter alternative allele with depth < minAltDepth. The programm will look in the **FORMAT** field exclusively.
@@ -166,7 +166,7 @@ Filter polymorphism variants from genome databases. The databases to considered 
 The fields to scan for each database are defined in the *conf/databases.yml* file and the population frequency is compared with the `--minMAF` field.
 
 #### `--filterRecurrence`
-Filter on recurrence values (for instance, intra-run occurence). In this case, the vcf file must contains the recurrence information 
+Filter on recurrence values (for instance, intra-run occurence). In this case, the vcf file must contains the recurrence information
 which can be defined the *conf/databases.yml* file.
 
 ## Outputs
@@ -188,7 +188,7 @@ Here is a list of recommanded parameters for different user cases.
 
 ### Gene Panel
 
-Let's calculated the TMB on a gene panel vcf file (coding size = 1.59Mb, caller = varscan, annotation = Annovar) with the following criteria: 
+Let's calculated the TMB on a gene panel vcf file (coding size = 1.59Mb, caller = varscan, annotation = Annovar) with the following criteria:
 - minDepth at 100X
 - non-synonymous
 - coding and splice
@@ -212,19 +212,21 @@ python pyTMB.py -i ${VCF} \
 
 ### Exome / Whole Genome Sequencing
 
-For larger panel, we recommand the following parameters ;
+For WES, we recommend filtering low quality, non coding, synonymous, polymorphic variants. Here, indels and splicing variants are kept. For WES, an effective Genome size of 33Mb is used but a tailored size depending on the variants and regions is preferred.
+
+
+In the case of a WES variant calling using Mutect2 as variant caller and Snpeff as annotation tool, a typical usage would be :
 
 ```
-python pyTMB.py -i ${VCF} \
+python pyTMB.py -i ${VCF} --effGenomeSize 33280000 \
 --dbConfig conf/snpeff.yml \
 --varConfig conf/mutect2.yml \
---minVAF 0.05 \
+--vaf 0.05 --maf 0.001 --minDepth 20 --minAltDepth 3\
 --filterLowQual \
---minDepth 100 \
 --filterNonCoding \
---filterIndel \
 --filterSyn \
---filterPolym --minMAF 0.001 --polymDb 1k,gnomad
+--filterPolym \
+--polymDb 1k,gnomad  > TMB_results.log
 ```
 
 ### Credits
@@ -234,4 +236,3 @@ This pipeline has been written by the bioinformatics core facility in close coll
 ### Contacts
 
 For any question, bug or suggestion, please use the issues system or contact the bioinformatics core facility.
-
