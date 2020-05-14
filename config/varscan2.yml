@@ -6,4 +6,5 @@
 
 freq: 'ALLELIC_RATIO'
 depth: 'DP'
+altDepth: 'AD'
 
