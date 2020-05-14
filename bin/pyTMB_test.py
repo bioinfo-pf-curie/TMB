@@ -228,6 +228,8 @@ def getTag(v, tag):
 
     if type(val) != np.ndarray:
         val = np.array([val], float)
+    else:
+        val = val.astype('float')
 
     return(val)
 
