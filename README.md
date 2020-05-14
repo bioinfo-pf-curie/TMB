@@ -182,14 +182,17 @@ This option allows to export a vcf file which only contains the variants used fo
 The option allows to export a vcf file with the tag **TMB_FILTERS** in the **INFO** field. This tag therefore contains the reason for which a variant would be filtered.
 
 
-## Examples
+## Usage and recommandations
 
-Let's calculated the TMB on a gene panel vcf file (coding size = 1.9Mb, caller = varscan, annotation = Annovar) with the following criteria: 
-- PASS
+Here is a list of recommanded parameters for different user cases.
+
+### Gene Panel
+
+Let's calculated the TMB on a gene panel vcf file (coding size = 1.59Mb, caller = varscan, annotation = Annovar) with the following criteria: 
 - minDepth at 100X
 - non-synonymous
-- coding
-- non polymorphism variants using 1K, gnomAD databases and a minMAF of 0.001
+- coding and splice
+- non polymorphism variants using 1K, gnomAD databases and a MAF of 0.001
 
 In this case, a typical usage would be :
 
@@ -202,9 +205,26 @@ python pyTMB.py -i ${VCF} \
 --filterNonCoding \
 --filterSplice \
 --filterSyn \
---filterPolym  --minMAF 0.001 --polymDb 1k,gnomad \
+--filterPolym --minMAF 0.001 --polymDb 1k,gnomad \
 --effGenomeSize 1590000 \
 --export > TMB_results.log
+```
+
+### Exome / Whole Genome Sequencing
+
+For larger panel, we recommand the following parameters ;
+
+```
+python pyTMB.py -i ${VCF} \
+--dbConfig conf/snpeff.yml \
+--varConfig conf/mutect2.yml \
+--minVAF 0.05 \
+--filterLowQual \
+--minDepth 100 \
+--filterNonCoding \
+--filterIndel \
+--filterSyn \
+--filterPolym --minMAF 0.001 --polymDb 1k,gnomad
 ```
 
 ### Credits

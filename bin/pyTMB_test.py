@@ -14,7 +14,7 @@
 #
 ##############################################################################
 
-__version__ = '1.2.0'
+__version__ = '1.2.1'
 
 """
 This script is designed to calculate a TMB score from a VCF file.
@@ -28,7 +28,7 @@ python pyTMB.py -i ${VCF} --minDepth 100 \
 --filterNonCoding \
 --filterSplice \
 --filterSyn \
---filterPolym  --minMAF 0.001 --polymDb 1k,gnomad \
+--filterPolym  --maf 0.001 --polymDb 1k,gnomad \
 --effGenomeSize 1590000 > TMB_results.log
 """
 
@@ -46,6 +46,7 @@ from datetime import date
 Load yaml file
 """
 def loadConfig(infile):
+
     with open(infile, 'r') as stream:
         try:
             return(yaml.safe_load(stream))
@@ -54,6 +55,7 @@ def loadConfig(infile):
 
 
 def getMultiAlleleHeader(vcf):
+
     FORMAT=[]
     INFO=[]
     for h in vcf.header_iter():
@@ -116,14 +118,16 @@ def isAnnotatedAs(v, infos, flags, sep):
 Check if a variant is in a genomeDb with a MAF > val
 """
 def isPolym(v, infos, flags, val):
+
     subINFO = subsetINFO(infos, keys=flags)
     for key in subINFO:
         if type(subINFO[key]) is tuple:
             for i in subINFO[key]:
-                if i is not None and float(i) >= float(val):
-                    return True    
+                if i is not None and i != ".": 
+                    if float(i) >= float(val):
+                        return True
         elif subINFO[key] is not None and subINFO[key] != ".":
-            if subINFO[key] is not None and float(sk[i]) >= float(val):
+            if float(subINFO[key]) >= float(val):
                 return True
     return(False)
 
@@ -132,6 +136,7 @@ def isPolym(v, infos, flags, val):
 Check if a variant is annotated as a cancer hotspot
 """
 def isCancerHotspot(v, infos, flags):
+
     subINFO = subsetINFO(infos, keys=flags)
     for key in subINFO:
         if subINFO[key] is not None and subINFO[key] != ".":
@@ -152,7 +157,6 @@ def subsetINFO(annot, keys):
                 subsetInfo.append(z)
     else:
         subsetInfo = dict((k, annot[k]) for k in keys if k in annot)
-
     return(subsetInfo)
 
 
@@ -211,58 +215,46 @@ def getTag(v, tag):
 Parse inputs
 """
 def argsParse():
+
     parser = argparse.ArgumentParser()
     parser.add_argument("-i", "--vcf", help="Input file (.vcf, .vcf.gz, .bcf)")
 
     # Configs
-    parser.add_argument("--dbConfig", help="Databases config file",
-                        default="./config/databases.yml")
-    parser.add_argument("--varConfig", help="Variant calling config file",
-                        default="./config/calling.yml")
+    parser.add_argument("--dbConfig", help="Databases config file", type=str, default="./config/databases.yml")
+    parser.add_argument("--varConfig", help="Variant calling config file", type=str, default="./config/calling.yml")
+    parser.add_argument("--sample", help="Specify the sample ID to focus on", type=str, default=None)
 
     # Efective genome size
     parser.add_argument("--effGenomeSize", help="Effective genome size", type=int, default=None)
-    parser.add_argument(
-        "--bed", help="Capture design to use if effGenomeSize is not defined (BED file)", default=None)
+    parser.add_argument("--bed", help="Capture design to use if effGenomeSize is not defined (BED file)", default=None)
 
     # Thresholds
-    parser.add_argument(
-        "--minVAF", help="Filter variants with Allelic Ratio < minVAF", type=float, default=0.05)
-    parser.add_argument("--minMAF", help="Filter variants with MAF < minMAF",
-                        type=float, default=0.001)
-    parser.add_argument(
-        "--minDepth", help="Filter variants with depth < minDepth", type=int, default=5)
-    parser.add_argument(
-        "--minAltDepth", help="Filter variants with alternative allele depth < minAltDepth", type=int, default=3)
+    parser.add_argument("--vaf", help="Filter variants with Allelic Ratio < vaf", type=float, default=0.05)
+    parser.add_argument("--maf", help="Filter variants with MAF > maf", type=float, default=0.001)
+    parser.add_argument("--minDepth", help="Filter variants with depth < minDepth", type=int, default=5)
+    parser.add_argument("--minAltDepth", help="Filter variants with alternative allele depth < minAltDepth", type=int, default=3)
 
     # Which variants to use
-    parser.add_argument("--filterLowQual",
-                        help="Filter low quality (i.e not PASS) variant", action="store_true")
+    parser.add_argument("--filterLowQual", help="Filter low quality (i.e not PASS) variant", action="store_true")
     parser.add_argument("--filterIndels", help="Filter insertions/deletions", action="store_true")
     parser.add_argument("--filterCoding", help="Filter Coding variants", action="store_true")
     parser.add_argument("--filterSplice", help="Filter Splice variants", action="store_true")
     parser.add_argument("--filterNonCoding", help="Filter Non-coding variants", action="store_true")
     parser.add_argument("--filterSyn", help="Filter Synonymous variants", action="store_true")
-    parser.add_argument("--filterNonSyn", help="Filter Non-Synonymous variants",
-                        action="store_true")
-    parser.add_argument("--filterCancerHotspot",
-                        help="Filter variants annotated as cancer hotspots", action="store_true")
-    parser.add_argument(
-        "--filterPolym", help="Filter polymorphism variants in genome databases. See --minMAF", action="store_true")
-    parser.add_argument("--filterRecurrence",
-                        help="Filter on recurrence values", action="store_true")
+    parser.add_argument("--filterNonSyn", help="Filter Non-Synonymous variants",action="store_true")
+    parser.add_argument("--filterCancerHotspot",help="Filter variants annotated as cancer hotspots", action="store_true")
+    parser.add_argument("--filterPolym", help="Filter polymorphism variants in genome databases. See --maf", action="store_true")
+    parser.add_argument("--filterRecurrence", help="Filter on recurrence values", action="store_true")
 
     # Databases
-    parser.add_argument(
-        "--polymDb", help="Databases used for polymorphisms detection (comma separated)", default="gnomad")
-    parser.add_argument(
-        "--cancerDb", help="Databases used for cancer hotspot annotation (comma separated)", default="cosmic")
+    parser.add_argument("--polymDb", help="Databases used for polymorphisms detection (comma separated)", default="gnomad")
+    parser.add_argument("--cancerDb", help="Databases used for cancer hotspot annotation (comma separated)", default="cosmic")
 
     # Others
-    parser.add_argument("--verbose", action="store_true")
-    parser.add_argument("--debug", action="store_true")
-    parser.add_argument("--export", help="", action="store_true")
-    parser.add_argument("--version", action='version', version="%(prog)s ("+__version__+")")
+    parser.add_argument("--verbose", help="Active verbose mode", action="store_true")
+    parser.add_argument("--debug", help="Export original VCF with TMB_FILTER tag", action="store_true")
+    parser.add_argument("--export", help="Export a VCF with the considered variants", action="store_true")
+    parser.add_argument("--version", help="Version number", action='version', version="%(prog)s ("+__version__+")")
 
     args = parser.parse_args()
     return (args)
@@ -273,7 +265,11 @@ if __name__ == "__main__":
     args = argsParse()
 
     # Loading Data
-    vcf = cyvcf2.VCF(args.vcf)
+    if args.sample is not None:
+        vcf = cyvcf2.VCF(args.vcf, samples=args.sample)
+    else:
+        vcf = cyvcf2.VCF(args.vcf)
+
     #maHeader = getMultiAlleleHeader(vcf)
     
     if len(vcf.samples) > 1:
@@ -314,8 +310,8 @@ if __name__ == "__main__":
                 sys.exit()
 
         try:
-            if len(variant.ALT) == 1:
-                continue
+            #if len(variant.ALT) == 1:
+            #    continue
 
             # All vcf INFO
             dbInfo = dict(variant.INFO)
@@ -350,7 +346,7 @@ if __name__ == "__main__":
 
             # Variant Allele Frequency
             fval = getTag(variant, callerFlags['freq'])
-            if fval is not None and len(fval[fval < args.minVAF]) == len(variant.ALT):
+            if fval is not None and len(fval[fval < args.vaf]) == len(variant.ALT):
                 debugInfo = ",".join([debugInfo, "VAF"])
                 if not args.debug:
                     continue
@@ -424,7 +420,7 @@ if __name__ == "__main__":
                     for x in dbFlags['polymDb'][db]:
                         fdb.append(x)
 
-                if isPolym(variant, infos=dbInfo, flags=fdb, val=args.minMAF):
+                if isPolym(variant, infos=dbInfo, flags=fdb, val=args.maf):
                     debugInfo = ",".join([debugInfo, "POLYM"])
                     if not args.debug:
                         continue
@@ -469,8 +465,8 @@ if __name__ == "__main__":
     print("")
     print("Filters:")
     print("-------")
-    print("minVAF=", args.minVAF)
-    print("minMAF=", args.minMAF)
+    print("VAF=", args.vaf)
+    print("MAF=", args.maf)
     print("minDepth=", args.minDepth)
     print("minAltDepth=", args.minAltDepth)
     print("filterLowQual=", args.filterLowQual)
