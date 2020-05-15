@@ -36,7 +36,7 @@ The TMB is defined as the number of variants over the size of the genomic region
 python bin/pyTMB.py --help
 usage: pyTMB.py [-h] [-i VCF] [--dbConfig DBCONFIG] [--varConfig VARCONFIG]
                 [--effGenomeSize EFFGENOMESIZE] [--bed BED]
-                [--vaf MINVAF] [--maf MINMAF] [--minDepth MINDEPTH] [--minAltDepth MINALTDEPTH]
+                [--vaf MINVAF] [--maf MAXMAF] [--minDepth MINDEPTH] [--minAltDepth MINALTDEPTH]
                 [--filterLowQual] [--filterIndels] [--filterCoding]
                 [--filterSplice] [--filterNonCoding] [--filterSyn]
                 [--filterNonSyn] [--filterCancerHotspot] [--filterPolym]
@@ -52,8 +52,8 @@ optional arguments:
   --effGenomeSize EFFGENOMESIZE       Effective genome size
   --bed BED                           Capture design to use if effGenomeSize is not defined (BED file)
 
-  --minVAF MINVAF                     Filter variants with Allelic Ratio < minVAF
-  --minMAF MINMAF                     Filter variants with MAF < minMAF
+  --vaf MINVAF                        Filter variants with Allelic Ratio < minVAF
+  --maf MINMAF                        Filter variants with MAF < maf
   --minDepth MINDEPTH                 Filter variants with depth < minDepth
   --minAltDepth MINALTDEPTH           FIlter alternative allele with depth < minAltDepth
   --filterLowQual                     Filter low quality (i.e not PASS) variant
@@ -125,8 +125,8 @@ The same is true for the `--cancerDb` parameter.
 Filter variants with Allelic Ratio < minVAF. Note the field used to get the Allelic Ratio field is defined in the *conf/caller.yml* file.
 In this case, the programm will first look for this information in the **FORMAT** field, and then in the **INFO** field.
 
-#### `--maf MINMAF`
-Filter variants with MAF < minMAF. Note the databases used to check the Min Allele Frequency are set using the `--polymDb`
+#### `--maf MAXMAF`
+Filter variants with MAF < maf. Note the databases used to check the Min Allele Frequency are set using the `--polymDb`
 parameters and the *conf/databases.yml* file.
 
 #### `--minDepth MINDEPTH`
