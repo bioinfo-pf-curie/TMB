@@ -24,7 +24,7 @@ Let's defined a TMB as a score using PASS, non-synonymous, coding, non polymorph
 In this case, a typical usage would be :
 
 python pyTMB.py -i ${VCF} --effGenomeSize 33280000 \
---vaf 0.05 --maf 0.001 --minDepth 20 --minAltDepth 3\
+--vaf 0.05 --maf 0.001 --minDepth 20 --minAltDepth 2\
 --filterLowQual \
 --filterNonCoding \
 --filterSyn \
@@ -334,7 +334,7 @@ if __name__ == "__main__":
 
     varCounter = 0
     varNI = 0
-    varTMB = 0   
+    varTMB = 0
     for variant in vcf:
         varCounter += 1
         if (varCounter % 1000 == 0 and args.verbose):
