@@ -250,66 +250,41 @@ def argsParse():
     parser.add_argument("-i", "--vcf", help="Input file (.vcf, .vcf.gz, .bcf)")
 
     # Configs
-    parser.add_argument("--dbConfig", 
-                        help="Databases config file", type=str, default="./config/databases.yml")
-    parser.add_argument("--varConfig", 
-                        help="Variant calling config file", type=str, default="./config/calling.yml")
-    parser.add_argument("--sample", 
-                        help="Specify the sample ID to focus on", type=str, default=None)
+    parser.add_argument("--dbConfig", help="Databases config file", type=str, default="./config/databases.yml")
+    parser.add_argument("--varConfig", help="Variant calling config file", type=str, default="./config/calling.yml")
+    parser.add_argument("--sample", help="Specify the sample ID to focus on", type=str, default=None)
 
     # Efective genome size
-    parser.add_argument("--effGenomeSize", 
-                        help="Effective genome size", type=int, default=None)
-    parser.add_argument("--bed", 
-                        help="Capture design to use if effGenomeSize is not defined (BED file)", default=None)
+    parser.add_argument("--effGenomeSize", help="Effective genome size", type=int, default=None)
+    parser.add_argument("--bed", help="Capture design to use if effGenomeSize is not defined (BED file)", default=None)
 
     # Thresholds
-    parser.add_argument("--vaf", 
-                        help="Filter variants with Allelic Ratio < vaf", type=float, default=0.05)
-    parser.add_argument("--maf", 
-                        help="Filter variants with MAF > maf", type=float, default=0.001)
-    parser.add_argument("--minDepth", 
-                        help="Filter variants with depth < minDepth", type=int, default=5)
-    parser.add_argument("--minAltDepth", 
-                        help="Filter variants with alternative allele depth < minAltDepth", type=int, default=3)
+    parser.add_argument("--vaf", help="Filter variants with Allelic Ratio <= vaf", type=float, default=0.05)
+    parser.add_argument("--maf", help="Filter variants with MAF > maf", type=float, default=0.001)
+    parser.add_argument("--minDepth", help="Filter variants with depth < minDepth", type=int, default=5)
+    parser.add_argument("--minAltDepth", help="Filter variants with alternative allele depth <= minAltDepth", type=int, default=2)
 
     # Which variants to use
-    parser.add_argument("--filterLowQual",
-                        help="Filter low quality (i.e not PASS) variant", action="store_true")
-    parser.add_argument("--filterIndels", 
-                        help="Filter insertions/deletions", action="store_true")
-    parser.add_argument("--filterCoding", 
-                        help="Filter Coding variants", action="store_true")
-    parser.add_argument("--filterSplice", 
-                        help="Filter Splice variants", action="store_true")
-    parser.add_argument("--filterNonCoding", 
-                        help="Filter Non-coding variants", action="store_true")
-    parser.add_argument("--filterSyn", 
-                        help="Filter Synonymous variants", action="store_true")
-    parser.add_argument("--filterNonSyn", 
-                        help="Filter Non-Synonymous variants", action="store_true")
-    parser.add_argument("--filterCancerHotspot",
-                        help="Filter variants annotated as cancer hotspots", action="store_true")
-    parser.add_argument("--filterPolym", 
-                        help="Filter polymorphism variants in genome databases. See --maf", action="store_true")
-    parser.add_argument("--filterRecurrence",
-                        help="Filter on recurrence values", action="store_true")
+    parser.add_argument("--filterLowQual", help="Filter low quality (i.e not PASS) variant", action="store_true")
+    parser.add_argument("--filterIndels", help="Filter insertions/deletions", action="store_true")
+    parser.add_argument("--filterCoding", help="Filter Coding variants", action="store_true")
+    parser.add_argument("--filterSplice", help="Filter Splice variants", action="store_true")
+    parser.add_argument("--filterNonCoding", help="Filter Non-coding variants", action="store_true")
+    parser.add_argument("--filterSyn", help="Filter Synonymous variants", action="store_true")
+    parser.add_argument("--filterNonSyn", help="Filter Non-Synonymous variants", action="store_true")
+    parser.add_argument("--filterCancerHotspot", help="Filter variants annotated as cancer hotspots", action="store_true")
+    parser.add_argument("--filterPolym", help="Filter polymorphism variants in genome databases. See --maf", action="store_true")
+    parser.add_argument("--filterRecurrence", help="Filter on recurrence values", action="store_true")
 
     # Databases
-    parser.add_argument("--polymDb", 
-                        help="Databases used for polymorphisms detection (comma separated)", default="gnomad")
-    parser.add_argument("--cancerDb", 
-                        help="Databases used for cancer hotspot annotation (comma separated)", default="cosmic")
+    parser.add_argument("--polymDb", help="Databases used for polymorphisms detection (comma separated)", default="gnomad")
+    parser.add_argument("--cancerDb", help="Databases used for cancer hotspot annotation (comma separated)", default="cosmic")
 
     # Others
-    parser.add_argument("--verbose", 
-                        help="Active verbose mode", action="store_true")
-    parser.add_argument("--debug", 
-                        help="Export original VCF with TMB_FILTER tag", action="store_true")
-    parser.add_argument("--export", 
-                        help="Export a VCF with the considered variants", action="store_true")
-    parser.add_argument("--version", 
-                        help="Version number", action='version', version="%(prog)s ("+__version__+")")
+    parser.add_argument("--verbose", help="Active verbose mode", action="store_true")
+    parser.add_argument("--debug", help="Export original VCF with TMB_FILTER tag", action="store_true")
+    parser.add_argument("--export", help="Export a VCF with the considered variants", action="store_true")
+    parser.add_argument("--version", help="Version number", action='version', version="%(prog)s ("+__version__+")")
 
     args = parser.parse_args()
     return (args)
@@ -401,21 +376,25 @@ if __name__ == "__main__":
 
             # Variant Allele Frequency
             fval = getTag(variant, callerFlags['freq'])
-            if fval is not None and len(fval[fval < args.vaf]) == len(variant.ALT):
+            if fval is not None and len(fval[fval <= args.vaf]) == len(variant.ALT):
                 debugInfo = ",".join([debugInfo, "VAF"])
                 if not args.debug:
                     continue
 
             # Sequencing Depth
             dval = getTag(variant, callerFlags['depth'])
-            if dval is not None and len(dval[dval < args.minDepth]) == len(variant.ALT):
+            if dval is not None and len(dval[dval <= args.minDepth]) == len(variant.ALT):
                 debugInfo = ",".join([debugInfo, "DEPTH"])
                 if not args.debug:
                     continue
 
             # Alternative allele Depth
             ad = getTag(variant, callerFlags['altDepth'])
-            if ad is not None and len(ad[ad < args.minAltDepth]) == len(variant.ALT):
+            # case where AD = REF + ALTs
+            if len(ad) == (len(variant.ALT) + 1):
+                ad = ad[1:]
+
+            if ad is not None and len(ad[ad <= args.minAltDepth]) == len(variant.ALT):
                 debugInfo = ",".join([debugInfo, "ALTDEPTH"])
                 if not args.debug:
                     continue

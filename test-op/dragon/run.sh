@@ -18,10 +18,10 @@ do
 
     echo ${SAMPLE}
 
-    #awk -v sample=${SAMPLE} '$1==sample{print}' ${REC} > ${SAMPLE}_table_report_rec.tsv
+    awk -v sample=${SAMPLE} '$1==sample{print}' ${REC} > ${SAMPLE}_table_report_rec.tsv
     cmd="time python addRec.py -i ${VCF} -r ${SAMPLE}_table_report_rec.tsv -o ${SAMPLE}_rec.vcf"
     echo $cmd
-    #eval $cmd
+    eval $cmd
 
     IVCF="${SAMPLE}_rec.vcf"
     OFILE=$(basename $VCF | sed -e 's/.hg19_multianno.vcf//')
@@ -55,7 +55,7 @@ do
     tmb4=$(grep "TMB=" ${OFILE}_TMB4.txt | awk -F"=" '{print $2}')
     
     cmd="rm ${SAMPLE}_table_report_rec.tsv ${SAMPLE}_rec.vcf *.txt"
-    #eval $cmd
+    eval $cmd
     
     echo -e "${SAMPLE}\t${nbvar1}\t${tmb1}\t${nbvar2}\t${tmb2}\t${nbvar3}\t${tmb3}\t${nbvar3}\t${tmb3}" >> TMB_${RUN}_results.tsv
 done
