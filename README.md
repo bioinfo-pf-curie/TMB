@@ -70,11 +70,10 @@ optional arguments:
   --polymDb POLYMDB                   Databases used for polymorphisms detection (comma separated)
   --cancerDb CANCERDB                 Databases used for cancer hotspot annotation (comma separated)
 
-  --verbose
-  --debug
-  --export
+  --debug                             Export a vcf file with the tag **TMB_FILTERS** in the **INFO** field.
+  --export                            Export a vcf file which only contains the variants used for TMB calculation
   --version
-
+  --verbose
 ```
 
 ## Configs
@@ -197,16 +196,15 @@ Let's calculated the TMB on a gene panel vcf file (coding size = 1.59Mb, caller 
 In this case, a typical usage would be :
 
 ```
-python pyTMB.py -i ${VCF} \
+python pyTMB.py -i ${VCF} --effGenomeSize 1590000 \
 --dbConfig conf/annovar.yml \
 --varConfig conf/varscan.yml \
---minDepth 100 \
+--minMAF 0.001 --minDepth 100 --minAltDepth 2\
 --filterLowQual \
 --filterNonCoding \
 --filterSplice \
 --filterSyn \
---filterPolym --minMAF 0.001 --polymDb 1k,gnomad \
---effGenomeSize 1590000 \
+--filterPolym --polymDb 1k,gnomad \
 --export > TMB_results.log
 ```
 
@@ -221,12 +219,11 @@ In the case of a WES variant calling using Mutect2 as variant caller and Snpeff 
 python pyTMB.py -i ${VCF} --effGenomeSize 33280000 \
 --dbConfig conf/snpeff.yml \
 --varConfig conf/mutect2.yml \
---vaf 0.05 --maf 0.001 --minDepth 20 --minAltDepth 3\
+--vaf 0.05 --maf 0.001 --minDepth 20 --minAltDepth 2 \
 --filterLowQual \
 --filterNonCoding \
 --filterSyn \
---filterPolym \
---polymDb 1k,gnomad  > TMB_results.log
+--filterPolym --polymDb 1k,gnomad  > TMB_results.log
 ```
 
 ### Credits
