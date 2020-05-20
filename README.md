@@ -27,7 +27,7 @@ conda env create -f environment.yml -p PATH_TO_INSTALL
 
 The idea behind this script is quite simple. All variants are scanned and filtered according to the criteria provided by the user. If a variant passes all the filters, it is therefore used for the TMB calculation. In other words, if no filters are provided, the script will simply count the number of variants.
 
-The TMB is defined as the number of variants over the size of the genomic region (in Mb). In order to calculate the size of the genome (ie. the `effectiveGenomeSize`), the user can provide a BED file (`--bed`) with the design of the assay. However, it is usually recommanded to adapt the genome size to the filters applied. For instance, if only coding variants are used, it would make sense to use only the genomic size of coding region for the TMB calculation. So far, **this is the user responsability to calculate the appropriate genome size** and to specify it with the `--effGenomeSize` parameter.
+The TMB is defined as the number of variants over the size of the genomic region (in Mb). In order to calculate the size of the genome (ie. the `effectiveGenomeSize`), the user can provide a BED file (`--bed`) with the design of the assay. However, it is usually recommended to adapt the genome size to the filters applied. For instance, if only coding variants are used, it would make sense to use only the genomic size of coding region for the TMB calculation. So far, **this is the user responsability to calculate the appropriate genome size** and to specify it with the `--effGenomeSize` parameter.
 
 
 ## Quick help
@@ -79,7 +79,7 @@ optional arguments:
 ## Configs
 
 Working with vcf files is usually not straighforward, and mainly depends on the variant caller and annotation tools/databases used.
-In order to make this tool as flexible as possible, we decided to set up **two configurations files** to defined with fields as to be checked and in which case.
+In order to make this tool as flexible as possible, we decided to set up **two configurations files** to defined which fields as to be checked and in which case.
 
 The `--dbConfig` file described all details about annotation. As an exemple, we provide some configurations for **Annovar** (*conf/annovar.yml*)
 and **snpEff** (*conf/snpeff.yaml*) tool.  
@@ -181,9 +181,9 @@ This option allows to export a vcf file which only contains the variants used fo
 The option allows to export a vcf file with the tag **TMB_FILTERS** in the **INFO** field. This tag therefore contains the reason for which a variant would be filtered.
 
 
-## Usage and recommandations
+## Usage and recommendations
 
-Here is a list of recommanded parameters for different user cases.
+Here is a list of recommended parameters for different user cases.
 
 ### Gene Panel
 
