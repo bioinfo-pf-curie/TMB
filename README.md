@@ -33,53 +33,71 @@ The TMB is defined as the number of variants over the size of the genomic region
 ## Quick help
 
 ```bash
-python bin/pyTMB.py --help
+python bin/pyTMB.py -h
+
 usage: pyTMB.py [-h] [-i VCF] [--dbConfig DBCONFIG] [--varConfig VARCONFIG]
-                [--effGenomeSize EFFGENOMESIZE] [--bed BED]
-                [--vaf MINVAF] [--maf MAXMAF] [--minDepth MINDEPTH] [--minAltDepth MINALTDEPTH]
-                [--filterLowQual] [--filterIndels] [--filterCoding]
-                [--filterSplice] [--filterNonCoding] [--filterSyn]
-                [--filterNonSyn] [--filterCancerHotspot] [--filterPolym]
-                [--filterRecurrence] [--polymDb POLYMDB] [--cancerDb CANCERDB]
-                [--verbose] [--debug] [--export] [--version]
+                [--sample SAMPLE] [--effGenomeSize EFFGENOMESIZE] [--bed BED]
+                [--vaf VAF] [--maf MAF] [--minDepth MINDEPTH]
+                [--minAltDepth MINALTDEPTH] [--filterLowQual] [--filterIndels]
+                [--filterCoding] [--filterSplice] [--filterNonCoding]
+                [--filterSyn] [--filterNonSyn] [--filterCancerHotspot]
+                [--filterPolym] [--filterRecurrence] [--polymDb POLYMDB]
+                [--cancerDb CANCERDB] [--verbose] [--debug] [--export]
+                [--version]
 
 optional arguments:
-  -h, --help                          Show this help message and exit
-  -i VCF, --vcf VCF                   Input file (.vcf, .vcf.gz, .bcf)
-  --dbConfig DBCONFIG                 Databases config file
-  --varConfig VARCONFIG               Variant calling config file
+  -h, --help            show this help message and exit
+  -i VCF, --vcf VCF     Input file (.vcf, .vcf.gz, .bcf) (default: None)
+  --dbConfig DBCONFIG   Databases config file (default:
+                        ./config/databases.yml)
+  --varConfig VARCONFIG
+                        Variant calling config file (default:
+                        ./config/calling.yml)
 
-  --effGenomeSize EFFGENOMESIZE       Effective genome size
-  --bed BED                           Capture design to use if effGenomeSize is not defined (BED file)
+  --effGenomeSize EFFGENOMESIZE
+                        Effective genome size (default: None)
+  --bed BED             Capture design to use if effGenomeSize is not defined
+                        (BED file) (default: None)
+  --vaf VAF             Filter variants with Allelic Ratio <= vaf (default:
+                        0.05)
+  --maf MAF             Filter variants with MAF > maf (default: 0.001)
+  --minDepth MINDEPTH   Filter variants with depth < minDepth (default: 5)
+  --minAltDepth MINALTDEPTH
+                        Filter variants with alternative allele depth <=
+                        minAltDepth (default: 2)
+  --filterLowQual       Filter low quality (i.e not PASS) variant (default:
+                        False)
+  --filterIndels        Filter insertions/deletions (default: False)
+  --filterCoding        Filter Coding variants (default: False)
+  --filterSplice        Filter Splice variants (default: False)
+  --filterNonCoding     Filter Non-coding variants (default: False)
+  --filterSyn           Filter Synonymous variants (default: False)
+  --filterNonSyn        Filter Non-Synonymous variants (default: False)
+  --filterCancerHotspot
+                        Filter variants annotated as cancer hotspots (default:
+                        False)
+  --filterPolym         Filter polymorphism variants in genome databases. See
+                        --maf (default: False)
+  --filterRecurrence    Filter on recurrence values (default: False)
 
-  --vaf MINVAF                        Filter variants with Allelic Ratio < minVAF
-  --maf MINMAF                        Filter variants with MAF < maf
-  --minDepth MINDEPTH                 Filter variants with depth < minDepth
-  --minAltDepth MINALTDEPTH           FIlter alternative allele with depth < minAltDepth
-  --filterLowQual                     Filter low quality (i.e not PASS) variant
-  --filterIndels                      Filter insertions/deletions
-  --filterCoding                      Filter Coding variants
-  --filterSplice                      Filter Splice variants
-  --filterNonCoding                   Filter Non-coding variants
-  --filterSyn                         Filter Synonymous variants
-  --filterNonSyn                      Filter Non-Synonymous variants
-  --filterCancerHotspot               Filter variants annotated as cancer hotspots
-  --filterPolym                       Filter polymorphism variants in genome databases. See --minMAF
-  --filterRecurrence                  Filter on recurrence values
+  --polymDb POLYMDB     Databases used for polymorphisms detection (comma
+                        separated) (default: gnomad)
+  --cancerDb CANCERDB   Databases used for cancer hotspot annotation (comma
+                        separated) (default: cosmic)
 
-  --polymDb POLYMDB                   Databases used for polymorphisms detection (comma separated)
-  --cancerDb CANCERDB                 Databases used for cancer hotspot annotation (comma separated)
-
-  --debug                             Export a vcf file with the tag **TMB_FILTERS** in the **INFO** field.
-  --export                            Export a vcf file which only contains the variants used for TMB calculation
-  --version
-  --verbose
+  --sample SAMPLE       Specify the sample ID to focus on (default: None)
+  --debug               Export original VCF with TMB_FILTER tag (default:
+                        False)
+  --export              Export a VCF with the considered variants (default:
+                        False)
+  --verbose             Active verbose mode (default: False)
+  --version             Version number
 ```
 
 ## Configs
 
 Working with vcf files is usually not straighforward, and mainly depends on the variant caller and annotation tools/databases used.
-In order to make this tool as flexible as possible, we decided to set up **two configurations files** to defined which fields as to be checked and in which case.
+In order to make this tool as flexible as possible, we decided to set up **two configurations files** to defined which fields have to be checked and in which case.
 
 The `--dbConfig` file described all details about annotation. As an exemple, we provide some configurations for **Annovar** (*conf/annovar.yml*)
 and **snpEff** (*conf/snpeff.yaml*) tool.  

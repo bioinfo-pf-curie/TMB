@@ -246,7 +246,7 @@ Parse inputs
 
 def argsParse():
 
-    parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument("-i", "--vcf", help="Input file (.vcf, .vcf.gz, .bcf)")
 
     # Configs
@@ -296,14 +296,22 @@ if __name__ == "__main__":
 
     # Load Data
     if args.sample is not None:
-        vcf = cyvcf2.VCF(args.vcf, samples=args.sample)
+        vcf = cyvcf2.VCF(args.vcf)
+        count = 0
+        for sample in vcf.samples:
+            count = count + 1
+            if str(sample) == str(args.sample):
+                vcf = cyvcf2.VCF(args.vcf, samples = args.sample)
+            elif count == len(vcf.samples):
+                print("Error: Name of the sample incorrect")
+                sys.exit(-1)
     else:
         vcf = cyvcf2.VCF(args.vcf)
 
     # Sample name
     if len(vcf.samples) > 1:
-        sys.stderr.write("Error: " + len(vcf.samples) +
-                         " sample detected. This version is designed for a single sample !")
+        sys.stderr.write("Error: " + str(len(vcf.samples)) +
+                         " sample detected. This version is designed for a single sample ! \n")
         sys.exit(-1)
 
     # Ouptuts
@@ -350,6 +358,7 @@ if __name__ == "__main__":
             # Get annotation INFO as a list of dict
             if dbFlags['tag'] != '':
                 annotInfo = infoTag2dl(variant.INFO.get(dbFlags['tag']))
+
             else:
                 annotInfo = info2dl(variant.INFO)
 
@@ -489,6 +498,11 @@ if __name__ == "__main__":
 
     # Calculate TMB
     TMB = round(float(varTMB)/(float(effGS)/1e6), 2)
+
+    # No Annotation
+    if varNI == varCounter:
+        print("/!\ Warning: No Annotation detected. Is your file annotated ?")
+        sys.exit(-1)
 
     # Output
     print("pyTMB version=", __version__)
