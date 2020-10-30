@@ -154,10 +154,3 @@ if __name__ == "__main__":
     os.remove(args.oprefix + ".thresholds.bed.gz.csi")
     os.remove(args.oprefix + ".regions.bed.gz.csi")
 
-
-#Problème à résoudre
-#- mieux gérer les filtres filterNonCoding et filterCoding, car pour le moment c'est soit l'un soit l'autre...
-#- bien tester le script pour s'assurer de son fonctionnement
-#- mettre des messages d'erreur si argument incorrect (try, except, sys.exit()...)
-#- mieux gérer les fichiers de sortie
-#- mettre à jour le yaml
