@@ -130,12 +130,12 @@ optional arguments:
 Working with vcf files is usually not straighforward, and mainly depends on the variant caller and annotation tools/databases used.
 In order to make this tool as flexible as possible, we decided to set up **two configurations files** to defined which fields have to be checked and in which case.
 
-The `--dbConfig` file described all details about annotation. As an exemple, we provide some configurations for **Annovar** (*conf/annovar.yml*)
-and **snpEff** (*conf/snpeff.yaml*) tool.  
+The `--dbConfig` file described all details about annotation. As an exemple, we provide some configurations for **Annovar** (*config/annovar.yml*)
+and **snpEff** (*config/snpeff.yaml*) tool.  
 These files can be customized by the user.
 
 In the same way, all parameters which are variant caller specific can be set up in another config file using the `--varConfig` parameter.
-Config files for **Varscan2** (*conf/varscan2.yml*) and **Mutect2** (*conf/mutect2.yml*) are provided as examples.
+Config files for **Varscan2** (*config/varscan2.yml*) and **Mutect2** (*config/mutect2.yml*) are provided as examples.
 
 The `yaml` config files must list the different **keys:values** for each function.
 As an exemple, to assess whether a variant is coding, the programm will used (for Annovar);
@@ -170,15 +170,15 @@ The same is true for the `--cancerDb` parameter.
 ### Filters
 
 #### `--vaf MINVAF`
-Filter variants with Allelic Ratio < minVAF. Note the field used to get the Allelic Ratio field is defined in the *conf/caller.yml* file.
+Filter variants with Allelic Ratio < minVAF. Note the field used to get the Allelic Ratio field is defined in the *config/caller.yml* file.
 In this case, the programm will first look for this information in the **FORMAT** field, and then in the **INFO** field.
 
 #### `--maf MAXMAF`
 Filter variants with MAF < maf. Note the databases used to check the Min Allele Frequency are set using the `--polymDb`
-parameters and the *conf/databases.yml* file.
+parameters and the *config/databases.yml* file.
 
 #### `--minDepth MINDEPTH`
-Filter variants with depth < minDepth. Note the field used to get the depth is defined in the *conf/caller.yml* file.
+Filter variants with depth < minDepth. Note the field used to get the depth is defined in the *config/caller.yml* file.
 In this case, the programm will first look for this information in the **FORMAT** field, and then in the **INFO** field.
 
 #### `--minAltDepth MINALTDEPTH`
@@ -191,31 +191,31 @@ Filter variants for which is the **FILTER** field is not **PASS** or for which t
 Filter insertions/deletions variants.
 
 #### `--filterCoding`
-Filter Coding variants as defined in the *conf/databases.yml* field.
+Filter Coding variants as defined in the *config/databases.yml* field.
 
 #### `--filterSplice`
-Filter Splice variants as defined in the *conf/databases.yml* field.
+Filter Splice variants as defined in the *config/databases.yml* field.
 
 #### `--filterNonCoding`
-Filter Non-coding variants as defined in the *conf/databases.yml* field.
+Filter Non-coding variants as defined in the *config/databases.yml* field.
 
 #### `--filterSyn`
-Filter Synonymous variants as defined in the *conf/databases.yml* field.
+Filter Synonymous variants as defined in the *config/databases.yml* field.
 
 #### `--filterNonSyn`
-Filter Non-Synonymous variants as defined in the *conf/databases.yml* field.
+Filter Non-Synonymous variants as defined in the *config/databases.yml* field.
 
 #### `--filterCancerHotspot`
-Filter variants annotated as cancer hotspots as defined in the *conf/databases.yml* field.
+Filter variants annotated as cancer hotspots as defined in the *config/databases.yml* field.
 So far, all variants with a 'cancer' annotation (for instance with a COSMIC Id) will be removed.
 
 #### `--filterPolym`
 Filter polymorphism variants from genome databases. The databases to considered can be listed with the `--polymDb` parameter.
-The fields to scan for each database are defined in the *conf/databases.yml* file and the population frequency is compared with the `--minMAF` field.
+The fields to scan for each database are defined in the *config/databases.yml* file and the population frequency is compared with the `--minMAF` field.
 
 #### `--filterRecurrence`
 Filter on recurrence values (for instance, intra-run occurence). In this case, the vcf file must contains the recurrence information
-which can be defined the *conf/databases.yml* file.
+which can be defined the *config/databases.yml* file.
 
 ## Outputs
 
@@ -246,8 +246,8 @@ In this case, a typical usage would be :
 
 ```
 python pyTMB.py -i ${VCF} --effGenomeSize 1590000 \
---dbConfig conf/annovar.yml \
---varConfig conf/varscan.yml \
+--dbConfig config/annovar.yml \
+--varConfig config/varscan.yml \
 --minMAF 0.001 --minDepth 100 --minAltDepth 2\
 --filterLowQual \
 --filterNonCoding \
@@ -266,8 +266,8 @@ In the case of a WES variant calling using Mutect2 as variant caller and Snpeff 
 
 ```
 python pyTMB.py -i ${VCF} --effGenomeSize 33280000 \
---dbConfig conf/snpeff.yml \
---varConfig conf/mutect2.yml \
+--dbConfig config/snpeff.yml \
+--varConfig config/mutect2.yml \
 --vaf 0.05 --maf 0.001 --minDepth 20 --minAltDepth 2 \
 --filterLowQual \
 --filterNonCoding \
