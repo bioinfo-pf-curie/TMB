@@ -42,24 +42,18 @@ However, it is usually recommended to adapt the genome size to the filters appli
 ```bash
 python3 bin/pyEffGenomeSize.py -h
 
-usage: pyEffGenomeSize.py [-h] [--bed BED] [--gtf GTF] [--bam BAM]
+usage: pyEffGenomeSize.py [-h] [--bed BED] [--bam BAM]
                           [--minCoverage MINCOVERAGE] [--minMapq MINMAPQ]
-                          [--filterNonCoding] [--filterCoding]
                           [--saveIntermediates] [-t THREAD]
                           [--oprefix OPREFIX] [--verbose] [--version]
 
 optional arguments:
   -h, --help            show this help message and exit
   --bed BED             BED file (.bed) (default: None)
-  --gtf GTF             GTF file for genome annotation (.gtf) (default: None)
   --bam BAM             BAM file for mapping statistics (.bam) (default: None)
   --minCoverage MINCOVERAGE
                         minimum coverage of the region (default: 0)
   --minMapq MINMAPQ     minimum coverage of the region (default: 0)
-  --filterNonCoding     Filter regions associated with non coding annotations
-                        (default: False)
-  --filterCoding        Filter regions associated with coding annotations
-                        (default: False)
   --saveIntermediates   Save mosdepth intermediate files (default: False)
   -t THREAD, --thread THREAD
                         Number of threads for mosdepth run (default: 1)
