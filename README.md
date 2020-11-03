@@ -23,6 +23,12 @@ To do so, simply use:
 conda env create -f environment.yml -p PATH_TO_INSTALL
 ```
 
+### Recommendations
+
+In order to have homogenous VCF entry files, avoid VCF ambiguities and have reproducible results we recommend to normalize your VCF before running this script, especially if the VCF file contains Multi Nucleotide Variants (MNVs) or multiallelic variants.
+
+For that we suggest to use `bcftools norm -f FASTA -m- -o file_norm.vcf file` command.
+
 ### Implementation
 
 The idea behind this script is quite simple. All variants are scanned and filtered according to the criteria provided by the user. If a variant passes all the filters, it is therefore used for the TMB calculation. In other words, if no filters are provided, the script will simply count the number of variants.
