@@ -33,6 +33,7 @@ isCoding:
     - rare_amino_acid_variant
     - stop_gained
     - stop_lost
+    - start_lost
     - transcript_ablation
 
 isNonCoding:
@@ -42,6 +43,7 @@ isNonCoding:
     - 5_prime_UTR_variant
     - conserved_intergenic_variant
     - conserved_intron_variant
+    - upstream_gene_variant
     - downstream_gene_variant
     - intergenic_region
     - intragenic_variant
@@ -60,7 +62,7 @@ isSynonymous:
   1:
     - start_retained_variant
     - stop_retained_variant
-    - synonymous variant
+    - synonymous_variant
 
 
 isNonSynonymous:

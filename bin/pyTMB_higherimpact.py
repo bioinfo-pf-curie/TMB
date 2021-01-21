@@ -14,7 +14,7 @@
 #
 ##############################################################################
 
-__version__ = '1.3.0dev'
+__version__ = '1.2.1'
 
 """
 This script is designed to calculate a TMB score from a VCF file.
@@ -113,16 +113,16 @@ Check if a variant has the provided annotation flags
 
 def isAnnotatedAs(v, infos, flags, sep):
 
+    #print("-----------------")
     # Subset annotation information as list
-    subINFO = subsetINFO(infos, keys=flags.keys())
-#    print(subINFO)
+    subINFO = subsetINFO(infos, keys=flags.keys(), returnFirst=True)
     # Compare list variant information and expected list of tags
     for sub in subINFO:
         # For all keys
         for k in flags.keys():
-            # For each value in keys
+            # For all expected values related to the flags
             for val in flags[k]:
-                # Use search to deal with multiple annotations
+                # Use search to deal with multiple annotations (&)
                 for subval in sub[k].split(sep):
                     if val == subval:
                         return(True)
@@ -168,7 +168,7 @@ Subset the annotation information to a few key values
 """
 
 
-def subsetINFO(annot, keys):
+def subsetINFO(annot, keys, returnFirst=False):
 
     if isinstance(annot, list):
         subsetInfo = []
@@ -178,6 +178,10 @@ def subsetINFO(annot, keys):
                 subsetInfo.append(z)
     else:
         subsetInfo = dict((k, annot[k]) for k in keys if k in annot)
+
+    if len(subsetInfo)>0 and returnFirst:
+        subsetInfo=[subsetInfo[0]]
+
     return(subsetInfo)
 
 
@@ -415,10 +419,9 @@ if __name__ == "__main__":
 
             # Coding variants
             if args.filterCoding and isAnnotatedAs(variant, infos=annotInfo, flags=dbFlags['isCoding'], sep=dbFlags['sep']):
-                if not isAnnotatedAs(variant, infos=annotInfo, flags=dbFlags['isNonCoding'], sep=dbFlags['sep']):
-                    debugInfo = ",".join([debugInfo, "CODING"])
-                    if not args.debug:
-                        continue
+                debugInfo = ",".join([debugInfo, "CODING"])
+                if not args.debug:
+                    continue
 
             # Splice variants
             if args.filterSplice and isAnnotatedAs(variant, infos=annotInfo, flags=dbFlags['isSplicing'], sep=dbFlags['sep']):
@@ -428,30 +431,21 @@ if __name__ == "__main__":
 
             # Non-coding variants
             if args.filterNonCoding and isAnnotatedAs(variant, infos=annotInfo, flags=dbFlags['isNonCoding'], sep=dbFlags['sep']):
- #               print(variant)
- #               print("------------")
- #               iscod=isAnnotatedAs(variant, infos=annotInfo, flags=dbFlags['isCoding'], sep=dbFlags['sep'])
- #               print("IS_CODING?", iscod)
-
-                if not isAnnotatedAs(variant, infos=annotInfo, flags=dbFlags['isCoding'], sep=dbFlags['sep']):
-                    debugInfo = ",".join([debugInfo, "NONCODING"])
-                    if not args.debug:
-                        continue
+                debugInfo = ",".join([debugInfo, "NONCODING"])
+                if not args.debug:
+                    continue
 
             # Synonymous
             if args.filterSyn and isAnnotatedAs(variant, infos=annotInfo, flags=dbFlags['isSynonymous'], sep=dbFlags['sep']):
-#                isnsyn=isAnnotatedAs(variant, infos=annotInfo, flags=dbFlags['isNonSynonymous'], sep=dbFlags['sep'])
-                if not isAnnotatedAs(variant, infos=annotInfo, flags=dbFlags['isNonSynonymous'], sep=dbFlags['sep']):
-                    debugInfo = ",".join([debugInfo, "SYN"])
-                    if not args.debug:
-                        continue
+                debugInfo = ",".join([debugInfo, "SYN"])
+                if not args.debug:
+                    continue
 
             # Non synonymous
             if args.filterNonSyn and isAnnotatedAs(variant, infos=annotInfo, flags=dbFlags['isNonSynonymous'], sep=dbFlags['sep']):
-                if not isAnnotatedAs(variant, infos=annotInfo, flags=dbFlags['isSynonymous'], sep=dbFlags['sep']):
-                    debugInfo = ",".join([debugInfo, "NON_SYN"])
-                    if not args.debug:
-                        continue
+                debugInfo = ",".join([debugInfo, "NON_SYN"])
+                if not args.debug:
+                    continue
 
             # Hotspot
             if args.filterCancerHotspot:

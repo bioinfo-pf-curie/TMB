@@ -1,29 +1,37 @@
 *************************************
-CHANGES IN VERSION 1.2.0
+version-1.3.0dev
 
 SIGNIFICANT USER CHANGES
 
-   o Add parameter `--minAltDepth`
-   o Rework filters to handle multiallelic Variants
-   o Swith filter name from --minVAF & --minMAF to --vaf & --maf
-   o test if the vcf contains only one sample 
+   - Update snpEff.yml file
+   - Deal with all transcripts for snpEff
 
 *************************************
-CHANGES IN VERSION 1.1.0
+version-1.2.0
 
 SIGNIFICANT USER CHANGES
 
-   o Remove parameters `--caller` and use `--varConfig` instead
-   o Remove parameters `--annot` and use `--dbConfig` instead
+   - Add parameter `--minAltDepth`
+   - Rework filters to handle multiallelic Variants
+   - Swith filter name from --minVAF & --minMAF to --vaf & --maf
+   - test if the vcf contains only one sample
+
+*************************************
+version-1.1.0
+
+SIGNIFICANT USER CHANGES
+
+   - Remove parameters `--caller` and use `--varConfig` instead
+   - Remove parameters `--annot` and use `--dbConfig` instead
 
 BUG FIXES
 
-   o Deal with '.' in getTag
-   o Fix bug in minDepth
+   - Deal with '.' in getTag
+   - Fix bug in minDepth
 
 *************************************
-RELEASE VERSION 1.0.0
+version-1.0.0
 
-   o Tested on the DRAGON data
-   o Support for Annovar and snpEff databases
-   o Support for Varscan2 and Mutect2
+   - Tested on the DRAGON data
+   - Support for Annovar and snpEff databases
+   - Support for Varscan2 and Mutect2
