@@ -374,7 +374,7 @@ if __name__ == "__main__":
                     continue
 
             # Variant has a QUAL value or not PASS in the FILTER column
-            if args.filterLowQual and (variant.QUAL <= 20 or variant.FILTER is not None):
+            if args.filterLowQual and (variant.QUAL is not None or variant.FILTER is not None):
                 debugInfo = ",".join([debugInfo, "QUAL"])
                 if not args.debug:
                     continue
