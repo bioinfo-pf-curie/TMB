@@ -115,7 +115,6 @@ def isAnnotatedAs(v, infos, flags, sep):
 
     # Subset annotation information as list
     subINFO = subsetINFO(infos, keys=flags.keys())
-#    print(subINFO)
     # Compare list variant information and expected list of tags
     for sub in subINFO:
         # For all keys
@@ -428,19 +427,13 @@ if __name__ == "__main__":
 
             # Non-coding variants
             if args.filterNonCoding and isAnnotatedAs(variant, infos=annotInfo, flags=dbFlags['isNonCoding'], sep=dbFlags['sep']):
- #               print(variant)
- #               print("------------")
- #               iscod=isAnnotatedAs(variant, infos=annotInfo, flags=dbFlags['isCoding'], sep=dbFlags['sep'])
- #               print("IS_CODING?", iscod)
-
-                if not isAnnotatedAs(variant, infos=annotInfo, flags=dbFlags['isCoding'], sep=dbFlags['sep']):
+                 if not isAnnotatedAs(variant, infos=annotInfo, flags=dbFlags['isCoding'], sep=dbFlags['sep']):
                     debugInfo = ",".join([debugInfo, "NONCODING"])
                     if not args.debug:
                         continue
 
             # Synonymous
             if args.filterSyn and isAnnotatedAs(variant, infos=annotInfo, flags=dbFlags['isSynonymous'], sep=dbFlags['sep']):
-#                isnsyn=isAnnotatedAs(variant, infos=annotInfo, flags=dbFlags['isNonSynonymous'], sep=dbFlags['sep'])
                 if not isAnnotatedAs(variant, infos=annotInfo, flags=dbFlags['isNonSynonymous'], sep=dbFlags['sep']):
                     debugInfo = ",".join([debugInfo, "SYN"])
                     if not args.debug:
