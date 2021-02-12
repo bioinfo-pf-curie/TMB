@@ -14,7 +14,7 @@
 #
 ##############################################################################
 
-__version__ = '1.3.0dev'
+__version__ = '1.3.0'
 
 """
 This script is designed to calculate a TMB score from a VCF file.
