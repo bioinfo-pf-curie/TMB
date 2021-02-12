@@ -14,7 +14,7 @@
 #
 ##############################################################################
 
-__version__ = '1.2.1'
+__version__ = '1.3.0'
 
 """
 This script is designed to calculate a TMB score from a VCF file.
@@ -414,9 +414,10 @@ if __name__ == "__main__":
 
             # Coding variants
             if args.filterCoding and isAnnotatedAs(variant, infos=annotInfo, flags=dbFlags['isCoding'], sep=dbFlags['sep']):
-                debugInfo = ",".join([debugInfo, "CODING"])
-                if not args.debug:
-                    continue
+                if not isAnnotatedAs(variant, infos=annotInfo, flags=dbFlags['isNonCoding'], sep=dbFlags['sep']):
+                    debugInfo = ",".join([debugInfo, "CODING"])
+                    if not args.debug:
+                        continue
 
             # Splice variants
             if args.filterSplice and isAnnotatedAs(variant, infos=annotInfo, flags=dbFlags['isSplicing'], sep=dbFlags['sep']):
@@ -426,21 +427,24 @@ if __name__ == "__main__":
 
             # Non-coding variants
             if args.filterNonCoding and isAnnotatedAs(variant, infos=annotInfo, flags=dbFlags['isNonCoding'], sep=dbFlags['sep']):
-                debugInfo = ",".join([debugInfo, "NONCODING"])
-                if not args.debug:
-                    continue
+                 if not isAnnotatedAs(variant, infos=annotInfo, flags=dbFlags['isCoding'], sep=dbFlags['sep']):
+                    debugInfo = ",".join([debugInfo, "NONCODING"])
+                    if not args.debug:
+                        continue
 
             # Synonymous
             if args.filterSyn and isAnnotatedAs(variant, infos=annotInfo, flags=dbFlags['isSynonymous'], sep=dbFlags['sep']):
-                debugInfo = ",".join([debugInfo, "SYN"])
-                if not args.debug:
-                    continue
+                if not isAnnotatedAs(variant, infos=annotInfo, flags=dbFlags['isNonSynonymous'], sep=dbFlags['sep']):
+                    debugInfo = ",".join([debugInfo, "SYN"])
+                    if not args.debug:
+                        continue
 
             # Non synonymous
             if args.filterNonSyn and isAnnotatedAs(variant, infos=annotInfo, flags=dbFlags['isNonSynonymous'], sep=dbFlags['sep']):
-                debugInfo = ",".join([debugInfo, "NON_SYN"])
-                if not args.debug:
-                    continue
+                if not isAnnotatedAs(variant, infos=annotInfo, flags=dbFlags['isSynonymous'], sep=dbFlags['sep']):
+                    debugInfo = ",".join([debugInfo, "NON_SYN"])
+                    if not args.debug:
+                        continue
 
             # Hotspot
             if args.filterCancerHotspot:
