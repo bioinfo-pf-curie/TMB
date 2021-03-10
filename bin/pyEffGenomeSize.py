@@ -24,7 +24,7 @@ This script is designed to calculate an exact effective genome size according to
 python pyEffGenomeSize.py -bed ${BED} \
 -bam ${BAM} --minCoverage 100 --minMapq 20 \
 -gtf ${GTF} --filterNonCoding --filterCoding \
-> result_folder
+--oprex /OUTPUT/PATH/suffix_file
 """
 
 import pybedtools as pbt
@@ -55,7 +55,7 @@ def argsParse():
     parser.add_argument("--minMapq", help="minimum coverage of the region",type=int, default=0)
     parser.add_argument("--filterNonCoding", help="Filter regions associated with non coding annotations",action="store_true")
     parser.add_argument("--filterCoding", help="Filter regions associated with coding annotations",action="store_true")
-    parser.add_argument("--featureTypes", help="List of Features to keep (column 3 from gtf/gff eg: exon, gene, Selenocysteine, start_codon, stop_codon, transcript, UTR, CDS", nargs='+', default = [])
+    parser.add_argument("--featureTypes", help="List of Features (exon, gene, transcript, UTR, CDS) to keep (3rd column from gtf/gff). Required with --filterCoding argument ", nargs='+', default = [])
 
     # Others
     parser.add_argument("--saveIntermediates", help="Save mosdepth intermediate files",action="store_true")
@@ -71,9 +71,7 @@ def filterGtf(interval, featuretype):
     """
     function using pybedtools nomenclature to filter transcript_types from gtf file with defined features.
     """
-    #print(featuretype)
     if interval.attrs['transcript_type'] in featuretype:
-        #print(interval.attrs['transcript_type'])
         return interval.attrs['transcript_type']
     return False
 
@@ -84,22 +82,6 @@ def filterFeatureGtf(interval, features):
     if interval[2] in features:
         return interval[2]
     return False
-
-
-    # intervalAnnot = interval.attrs.items()
-    # #print(intervalAnnot)
-    # print(interval.attrs['gene_type'], interval.attrs['transcript_type'])
-    # for annot in interval.attrs['transcript_type']:
-    #     print(annot)
-    #     if annot in featuretype:
-    #         return interval
-    #return False
-
-#def subsetFeaturetypes(featuretype):
-#    """
-#    Returns the filename containing only `featuretype` features.
-#    """
-#    return g.filter(filterGtf, featuretype).saveas().fn
 
 def getEffGenomeSizeFromMosdepth(infile):
     """
@@ -125,8 +107,9 @@ def getEffGenomeSizeFromMosdepth(infile):
 
     f.close()
 
+    print("## File Name: {}".format(infile))
     print("## Total region = {} (100%)".format(totgs))
-    print("## Callable region = {} ({}%)".format(effgs, round(effgs/totgs*100, 3)))
+    print("## Callable region = {} ({}%)\n".format(effgs, round(effgs/totgs*100, 3)))
 
     return effgs
 
@@ -136,64 +119,74 @@ if __name__ == "__main__":
     args = argsParse()
 
     # Creating pybedtools objects
-    print("Loading data")
+    if args.verbose:
+        print("[RUNNING INFO]: Loading data\n")
     myBed = pbt.BedTool(args.bed)
     myGtf = pbt.BedTool(args.gtf)
 
+    # Filtering step:
+    # List of annotation from transcript_type field in gtf:
     coding = ["antisense", "IG_C_gene","IG_D_gene","IG_J_gene", "IG_V_gene","protein_coding","TR_C_gene","TR_D_gene","TR_J_gene", "TR_V_gene","nonsense_mediated_decay","non_stop_decay"]
     nonCoding = ["3prime_overlapping_ncrna", "IG_C_pseudogene","IG_J_pseudogene","IG_V_pseudogene","lincRNA","miRNA","misc_RNA","Mt_rRNA","Mt_tRNA","polymorphic_pseudogene","processed_transcript","processed_pseudogene","pseudogene","retained_intron","rRNA","sense_intronic","sense_overlapping","snoRNA","snRNA","transcribed_processed_pseudogene","transcribed_unprocessed_pseudogene","translated_processed_pseudogene","TR_J_pseudogene","TR_V_pseudogene","unitary_pseudogene","unprocessed_pseudogene"]
 
-    if args.filterCoding:
-        filteredGtf = myGtf.filter(filterGtf, nonCoding).saveas("filtered_gtf.gtf")
-        filteredGtf = pbt.BedTool(filteredGtf)
-        #print(pbt.BedTool(filteredGtf).head())
-
+    if args.verbose:
+        print("[RUNNING INFO]: filtering GTF file\n")
 
     if args.filterNonCoding:
-        filteredGtf = myGtf.filter(filterGtf, coding).saveas("filtered_gtf.gtf")
+        filteredGtf = myGtf.filter(filterGtf, coding)
         filteredGtf = pbt.BedTool(filteredGtf)
-        #print(pbt.BedTool(filteredGtf).head())
+        featuretypes = ["exon"]
+        feature_filteredGtf = filteredGtf.filter(filterFeatureGtf, featuretypes).saveas("filtered_gtf.gtf")
+        filteredGtf = pbt.BedTool(feature_filteredGtf)
+        print(pbt.BedTool(filteredGtf).head())
 
-    if args.featureTypes:
-        features = ["exon", "gene", "Selenocysteine", "start_codon", "stop_codon", "transcript", "UTR", "CDS"]
-        for elem in args.featureTypes:
-            if elem in features:
+    if args.filterCoding:
+        if not args.featureTypes:
+            sys.stderr.write("Error: --filterCoding requires --featureTypes.\n")
+            sys.exit(-1)
+        else:
+            filteredGtf = myGtf.filter(filterGtf, nonCoding)
+            filteredGtf = pbt.BedTool(filteredGtf)
+
+            features = ["exon", "gene", "transcript", "UTR", "CDS"]
+            check = set(args.featureTypes).issubset(features)
+
+            if check is True:
                 featuretypes = args.featureTypes
-                feature_filteredGtf = filteredGtf.filter(filterFeatureGtf, featuretypes).saveas("feature_filtered_gtf.gtf")
+                feature_filteredGtf = filteredGtf.filter(filterFeatureGtf, featuretypes).saveas("filtered_gtf.gtf")
                 filteredGtf = pbt.BedTool(feature_filteredGtf)
                 print(pbt.BedTool(filteredGtf).head())
             else:
-                print(type(args.featureTypes))
-                print(type(features))
-                sys.stderr.write("Error : wrong featureType. \nNot in [exon,gene,Selenocysteine,start_codon,stop_codon, transcript,UTR,CDS] list !?\n")
+                sys.stderr.write("Error : wrong featureType. \nNot in [exon,gene,transcript,UTR,CDS] list !?\n")
                 sys.exit(-1)
 
-        #print(pbt.BedTool(filteredGtf).head())
+    if args.filterNonCoding or args.filterCoding:
+        if args.verbose:
+            print("[RUNNING INFO]: running bedtools intersect on gtf and bed...\n")
+        intersectBed = myBed.intersect(filteredGtf, u = True).saveas(args.oprefix +".intersect.bed")
 
+        # Mosdepth calculation
+        if args.verbose:
+            print("[RUNNING INFO]: running mosdepth ...\n")
 
+        sbp.run(["mosdepth", "-t", str(args.thread), "--by", str(args.oprefix +".intersect.bed"), "-n", "--thresholds", str(args.minCoverage), "--mapq", str(args.minMapq), str(args.oprefix), str(args.bam)])
+        # Unzip mosdepth bed file
+        sbp.run(["gunzip", args.oprefix +".thresholds.bed.gz"])
+        effsize=getEffGenomeSizeFromMosdepth(args.oprefix +".thresholds.bed")
 
+        #mosdepth_bed = pbt.BedTool(args.oprefix +".thresholds.bed")
+        #intersectBed = mosdepth_bed.intersect(filteredGtf, u = True).saveas(args.oprefix +".intersect.bed")
+        #effsize=getEffGenomeSizeFromMosdepth(args.oprefix +".intersect.bed")
+    else:
+        # Mosdepth calculation
+        if args.verbose:
+            print("[RUNNING INFO]: running mosdepth ...\n")
 
-    ########################################
-    ## mosdepth calculation
-    if args.verbose:
-        print("running mosdepth ...")
-    sbp.run(["mosdepth", "-t", str(args.thread), "--by", str(args.bed), "-n", "--thresholds", str(args.minCoverage), "--mapq", str(args.minMapq), str(args.oprefix), str(args.bam)])
+        sbp.run(["mosdepth", "-t", str(args.thread), "--by", str(args.bed), "-n", "--thresholds", str(args.minCoverage), "--mapq", str(args.minMapq), str(args.oprefix), str(args.bam)])
+        # Unzip mosdepth bed file
+        sbp.run(["gunzip", args.oprefix +".thresholds.bed.gz"])
+        effsize=getEffGenomeSizeFromMosdepth(args.oprefix +".thresholds.bed")
 
-    # Unzip mosdepth bed file for intersect
-    sbp.run(["gunzip", args.oprefix +".thresholds.bed.gz"])
-
-    if args.verbose:
-        print("running bedtools intersect ...")
-
-    mosdepth_bed = pbt.BedTool(args.oprefix +".thresholds.bed")
-    intersectBed = mosdepth_bed.intersect(filteredGtf).saveas('intersect_bed_gtf.bed')
-
-    if args.verbose:
-        print("head of intersect bed")
-        print(intersectBed.head())
-
-    effsize=getEffGenomeSizeFromMosdepth(args.oprefix +".thresholds.bed")
-    effsize=getEffGenomeSizeFromMosdepth("intersect_bed_gtf.bed")
 
     ## clean modepth output files
     os.remove(args.oprefix + ".mosdepth.global.dist.txt")
@@ -201,6 +194,6 @@ if __name__ == "__main__":
     os.remove(args.oprefix + ".mosdepth.summary.txt")
     if not args.saveIntermediates:
         os.remove(args.oprefix + ".regions.bed.gz")
-        os.remove(args.oprefix + ".thresholds.bed.gz")
+        os.remove(args.oprefix + ".thresholds.bed")
     os.remove(args.oprefix + ".thresholds.bed.gz.csi")
     os.remove(args.oprefix + ".regions.bed.gz.csi")

@@ -40,26 +40,38 @@ However, it is usually recommended to adapt the genome size to the filters appli
 
 ## Quick help
 ```bash
-python3 bin/pyEffGenomeSize.py -h
+python3 ~/Documents/Tom/Pipelines/tmb/bin/pyEffGenomeSize.py -h
 
-usage: pyEffGenomeSize.py [-h] [--bed BED] [--bam BAM]
+usage: pyEffGenomeSize.py [-h] [--bed BED] [--gtf GTF] [--bam BAM]
                           [--minCoverage MINCOVERAGE] [--minMapq MINMAPQ]
+                          [--filterNonCoding] [--filterCoding]
+                          [--featureTypes FEATURETYPES [FEATURETYPES ...]]
                           [--saveIntermediates] [-t THREAD]
                           [--oprefix OPREFIX] [--verbose] [--version]
 
 optional arguments:
   -h, --help            show this help message and exit
   --bed BED             BED file (.bed) (default: None)
+  --gtf GTF             GTF file for genome annotation (.gtf) (default: None)
   --bam BAM             BAM file for mapping statistics (.bam) (default: None)
   --minCoverage MINCOVERAGE
                         minimum coverage of the region (default: 0)
   --minMapq MINMAPQ     minimum coverage of the region (default: 0)
+  --filterNonCoding     Filter regions associated with non coding annotations
+                        (default: False)
+  --filterCoding        Filter regions associated with coding annotations
+                        (default: False)
+  --featureTypes FEATURETYPES [FEATURETYPES ...]
+                        List of Features (exon, gene, transcript, UTR, CDS) to
+                        keep (3rd column from gtf/gff). Required with
+                        --filterCoding argument (default: [])
   --saveIntermediates   Save mosdepth intermediate files (default: False)
   -t THREAD, --thread THREAD
                         Number of threads for mosdepth run (default: 1)
   --oprefix OPREFIX     Suffix for filtered bed (default: pyeffg)
   --verbose             Active verbose mode (default: False)
   --version             Version number
+
 
 ```
 
@@ -167,6 +179,7 @@ The same is true for the `--cancerDb` parameter.
 
 ## Usage
 
+## `pyTMB.py`:
 ### Filters
 
 #### `--vaf MINVAF`
@@ -229,6 +242,28 @@ This option allows to export a vcf file which only contains the variants used fo
 
 The option allows to export a vcf file with the tag **TMB_FILTERS** in the **INFO** field. This tag therefore contains the reason for which a variant would be filtered.
 
+## `pyTMB.py`:
+
+### Filters
+
+#### `--minCoverage`
+
+Define the minimum coverage accepted for each region of the bed file
+#### `--minMapq`
+
+Mapping quality threshold. reads with a mapping quality less than this are ignored
+
+#### `--filterNonCoding`
+
+This filter removes regions considered as non coding from the gtf and bed files to only keep exonic regions.
+
+#### `--filterCoding`
+
+This filter removes regions considered as coding based on the transcript_type field in the gtf.
+This filter **requires** the parameter `featureTypes`
+
+#### `--featureTypes`
+This parameter offers the possibility to choose one or multiple features to select from the following ("exon", "gene", "transcript", "UTR", "CDS") to keep in the final bed file. 
 
 ## Usage and recommendations
 
