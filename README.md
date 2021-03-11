@@ -249,6 +249,7 @@ The option allows to export a vcf file with the tag **TMB_FILTERS** in the **INF
 #### `--minCoverage`
 
 Define the minimum coverage accepted for each region of the bed file
+
 #### `--minMapq`
 
 Mapping quality threshold. reads with a mapping quality less than this are ignored
@@ -263,7 +264,8 @@ This filter removes regions considered as coding based on the transcript_type fi
 This filter **requires** the parameter `featureTypes`
 
 #### `--featureTypes`
-This parameter offers the possibility to choose one or multiple features to select from the following ("exon", "gene", "transcript", "UTR", "CDS") to keep in the final bed file. 
+
+This parameter offers the possibility to choose one or multiple features to select from the following ("exon", "gene", "transcript", "UTR", "CDS") to keep in the final bed file.
 
 ## Usage and recommendations
 
