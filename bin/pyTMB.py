@@ -302,7 +302,7 @@ if __name__ == "__main__":
 
     # Sample name
     if len(vcf.samples) > 1:
-        sys.stderr.write("Error: " + len(vcf.samples) +
+        sys.stderr.write("Error: " + str(len(vcf.samples)) +
                          " sample detected. This version is designed for a single sample !")
         sys.exit(-1)
 
