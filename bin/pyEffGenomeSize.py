@@ -46,8 +46,8 @@ def argsParse():
     """
     #Inputs
     parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-    parser.add_argument("--bed", help="BED file (.bed)", default=None)
-    parser.add_argument("--gtf", help="GTF file for genome annotation (.gtf)", default=None)
+    parser.add_argument("--bed", help="BED file (.bed)", required=True, default=None)
+    parser.add_argument("--gtf", help="GTF file for genome annotation (.gtf)", required=True, default=None)
     parser.add_argument("--bam", help="BAM file for mapping statistics (.bam)", default=None)
 
     #Filters
@@ -95,23 +95,28 @@ def getEffGenomeSizeFromMosdepth(infile):
         for line in f:
             bedtab = line.strip().split("\t")
             nline += 1
-            try:
-                chromosome, start, end, region, coverage = bedtab[:5]
-            except ValueError:
-                sys.stderr.write("Error : wrong input format in line", nline, ". Not a BED file !?")
-                sys.exit(-1)
-
+            if args.bam:
+                try:
+                    chromosome, start, end, region, coverage = bedtab[:5]
+                    effgs += int(coverage)
+                except ValueError:
+                    sys.stderr.write("Error : wrong input format in line", nline, ". Not a BED file !?")
+                    sys.exit(-1)
+            else:
+                try:
+                    chromosome, start, end = bedtab[:3]
+                except ValueError:
+                    sys.stderr.write("Error : wrong input format in line", nline, ". Not a BED file !?")
+                    sys.exit(-1)
             intl = abs(int(end) - int(start))
             totgs += intl
-            effgs += int(coverage)
 
     f.close()
 
     print("## File Name: {}".format(infile))
-    print("## Total region = {} (100%)".format(totgs))
-    print("## Callable region = {} ({}%)\n".format(effgs, round(effgs/totgs*100, 3)))
-
-    return effgs
+    print("## Total region = {}".format(totgs))
+    if args.bam:
+        print("## Callable region = {} ({}%)\n".format(effgs, round(effgs/totgs*100, 3)))
 
 if __name__ == "__main__":
 
@@ -165,6 +170,7 @@ if __name__ == "__main__":
             print("[RUNNING INFO]: running bedtools intersect on gtf and bed...\n")
         intersectBed = myBed.intersect(filteredGtf, u = True).saveas(args.oprefix +".intersect.bed")
 
+    if args.bam:
         # Mosdepth calculation
         if args.verbose:
             print("[RUNNING INFO]: running mosdepth ...\n")
@@ -172,28 +178,24 @@ if __name__ == "__main__":
         sbp.run(["mosdepth", "-t", str(args.thread), "--by", str(args.oprefix +".intersect.bed"), "-n", "--thresholds", str(args.minCoverage), "--mapq", str(args.minMapq), str(args.oprefix), str(args.bam)])
         # Unzip mosdepth bed file
         sbp.run(["gunzip", args.oprefix +".thresholds.bed.gz"])
-        effsize=getEffGenomeSizeFromMosdepth(args.oprefix +".thresholds.bed")
+        getEffGenomeSizeFromMosdepth(args.oprefix +".thresholds.bed")
 
-        #mosdepth_bed = pbt.BedTool(args.oprefix +".thresholds.bed")
-        #intersectBed = mosdepth_bed.intersect(filteredGtf, u = True).saveas(args.oprefix +".intersect.bed")
-        #effsize=getEffGenomeSizeFromMosdepth(args.oprefix +".intersect.bed")
+        ## clean modepth output files
+        os.remove(args.oprefix + ".mosdepth.global.dist.txt")
+        os.remove(args.oprefix + ".mosdepth.region.dist.txt")
+        os.remove(args.oprefix + ".mosdepth.summary.txt")
+        if not args.saveIntermediates:
+            os.remove(args.oprefix + ".regions.bed.gz")
+            os.remove(args.oprefix + ".thresholds.bed")
+        os.remove(args.oprefix + ".thresholds.bed.gz.csi")
+        os.remove(args.oprefix + ".regions.bed.gz.csi")
+
     else:
         # Mosdepth calculation
-        if args.verbose:
-            print("[RUNNING INFO]: running mosdepth ...\n")
-
-        sbp.run(["mosdepth", "-t", str(args.thread), "--by", str(args.bed), "-n", "--thresholds", str(args.minCoverage), "--mapq", str(args.minMapq), str(args.oprefix), str(args.bam)])
-        # Unzip mosdepth bed file
-        sbp.run(["gunzip", args.oprefix +".thresholds.bed.gz"])
-        effsize=getEffGenomeSizeFromMosdepth(args.oprefix +".thresholds.bed")
-
-
-    ## clean modepth output files
-    os.remove(args.oprefix + ".mosdepth.global.dist.txt")
-    os.remove(args.oprefix + ".mosdepth.region.dist.txt")
-    os.remove(args.oprefix + ".mosdepth.summary.txt")
-    if not args.saveIntermediates:
-        os.remove(args.oprefix + ".regions.bed.gz")
-        os.remove(args.oprefix + ".thresholds.bed")
-    os.remove(args.oprefix + ".thresholds.bed.gz.csi")
-    os.remove(args.oprefix + ".regions.bed.gz.csi")
+        # if args.verbose:
+        #     print("[RUNNING INFO]: running mosdepth ...\n")
+        #
+        # sbp.run(["mosdepth", "-t", str(args.thread), "--by", str(args.bed), "-n", "--thresholds", str(args.minCoverage), "--mapq", str(args.minMapq), str(args.oprefix), str(args.bam)])
+        # # Unzip mosdepth bed file
+        # sbp.run(["gunzip", args.oprefix +".thresholds.bed.gz"])
+        getEffGenomeSizeFromMosdepth(args.oprefix +".intersect.bed")
