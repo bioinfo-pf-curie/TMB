@@ -56,6 +56,7 @@ def argsParse():
     parser.add_argument("--filterNonCoding", help="Filter regions associated with non coding annotations",action="store_true")
     parser.add_argument("--filterCoding", help="Filter regions associated with coding annotations",action="store_true")
     parser.add_argument("--featureTypes", help="List of Features (exon, gene, transcript, UTR, CDS) to keep (3rd column from gtf/gff). Required with --filterCoding argument ", nargs='+', default = [])
+    parser.add_argument("--mosdepth", help="enable mosdepth processing, require .bam file , action="store_true")
 
     # Others
     parser.add_argument("--saveIntermediates", help="Save mosdepth intermediate files",action="store_true")
@@ -95,7 +96,7 @@ def getEffGenomeSizeFromMosdepth(infile):
         for line in f:
             bedtab = line.strip().split("\t")
             nline += 1
-            if args.bam:
+            if args.mosdepth:
                 try:
                     chromosome, start, end, region, coverage = bedtab[:5]
                     effgs += int(coverage)
@@ -115,7 +116,7 @@ def getEffGenomeSizeFromMosdepth(infile):
 
     print("## File Name: {}".format(infile))
     print("## Total region = {}".format(totgs))
-    if args.bam:
+    if args.mosdepth:
         print("## Callable region = {} ({}%)\n".format(effgs, round(effgs/totgs*100, 3)))
 
 if __name__ == "__main__":
@@ -170,12 +171,12 @@ if __name__ == "__main__":
             print("[RUNNING INFO]: running bedtools intersect on gtf and bed...\n")
         intersectBed = myBed.intersect(filteredGtf, u = True).saveas(args.oprefix +".intersect.bed")
 
-    if args.bam:
+    if args.mosdepth:
         # Mosdepth calculation
         if args.verbose:
             print("[RUNNING INFO]: running mosdepth ...\n")
 
-        sbp.run(["mosdepth", "-t", str(args.thread), "--by", str(args.oprefix +".intersect.bed"), "-n", "--thresholds", str(args.minCoverage), "--mapq", str(args.minMapq), str(args.oprefix), str(args.bam)])
+        sbp.run(["mosdepth", "-t", str(args.thread), "--by", str(args.oprefix +".intersect.bed"), "-n", "--thresholds", str(args.minCoverage), "--mapq", str(args.minMapq), str(args.oprefix), str(args.mosdepth)])
         # Unzip mosdepth bed file
         sbp.run(["gunzip", args.oprefix +".thresholds.bed.gz"])
         getEffGenomeSizeFromMosdepth(args.oprefix +".thresholds.bed")
