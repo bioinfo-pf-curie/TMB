@@ -5,6 +5,8 @@ SIGNIFICANT USER CHANGES
 
    - Update snpEff.yml configuration file (M. Neou/J. Wong)
    - Manage all transcripts for snpEff
+   - Add pyEffGenomeSize.py script
+   - Update environment.yml 
 
 *************************************
 version-1.2.0

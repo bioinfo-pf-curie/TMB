@@ -33,47 +33,14 @@ For that we suggest to use `bcftools norm -f FASTA -m- -o file_norm.vcf file` co
 
 The idea behind this script is quite simple. All variants are scanned and filtered according to the criteria provided by the user. If a variant passes all the filters, it is therefore used for the TMB calculation. In other words, if no filters are provided, the script will simply count the number of variants.
 
-The TMB is defined as the number of variants over the size of the genomic region (in Mb). In order to calculate the size of the genome (ie. the `effectiveGenomeSize`), the user can provide a BED file (`--bed`) with the design of the assay. This tool also provides a feature to create a bed file with specific coverage and mapping quality thresholds defined by the user (script in `bin/pyEffGenomeSize.py`).
+The TMB is defined as the number of variants over the size of the genomic region (in Mb). In order to calculate the size of the genome (ie. the `effectiveGenomeSize`), the user can provide a BED file (`--bed`) with the design of the assay. This bed file should be ordered, 0 based and with no header. Another alternative is to use the other feature provided in this script.
 
-However, it is usually recommended to adapt the genome size to the filters applied. For instance, if only coding variants are used, it would make sense to use only the genomic size of coding region for the TMB calculation. So far, **this is the user responsability to provide an intial bed file with corresponding genomic features.** and to specify it to the `pyEffGenomeSize.py` script of directly to the `--bed` parameter. The user can also provide the size of the bed with the `--effGenomeSize` parameter.
+This tool also provides a script to create a bed file based on specific criterias such as annotations, coverage and mapping quality thresholds defined by the user (script in `bin/pyEffGenomeSize.py`).
+
+Indeed, it is usually recommended to adapt the genome size to the filters applied. For instance, if only coding variants are used, it would make sense to use only the genomic size of coding region for the TMB calculation. So far, **this is the user responsability to provide an intial bed file with corresponding genomic features.** and to specify it to the `pyEffGenomeSize.py` script or directly to the `--bed` parameter. The user can also provide the size of the bed with the `--effGenomeSize` parameter.
 
 
 ## Quick help
-```bash
-python3 ~/Documents/Tom/Pipelines/tmb/bin/pyEffGenomeSize.py -h
-
-usage: pyEffGenomeSize.py [-h] [--bed BED] [--gtf GTF] [--bam BAM]
-                          [--minCoverage MINCOVERAGE] [--minMapq MINMAPQ]
-                          [--filterNonCoding] [--filterCoding]
-                          [--featureTypes FEATURETYPES [FEATURETYPES ...]]
-                          [--saveIntermediates] [-t THREAD]
-                          [--oprefix OPREFIX] [--verbose] [--version]
-
-optional arguments:
-  -h, --help            show this help message and exit
-  --bed BED             BED file (.bed) (default: None)
-  --gtf GTF             GTF file for genome annotation (.gtf) (default: None)
-  --bam BAM             BAM file for mapping statistics (.bam) (default: None)
-  --minCoverage MINCOVERAGE
-                        minimum coverage of the region (default: 0)
-  --minMapq MINMAPQ     minimum coverage of the region (default: 0)
-  --filterNonCoding     Filter regions associated with non coding annotations
-                        (default: False)
-  --filterCoding        Filter regions associated with coding annotations
-                        (default: False)
-  --featureTypes FEATURETYPES [FEATURETYPES ...]
-                        List of Features (exon, gene, transcript, UTR, CDS) to
-                        keep (3rd column from gtf/gff). Required with
-                        --filterCoding argument (default: [])
-  --saveIntermediates   Save mosdepth intermediate files (default: False)
-  -t THREAD, --thread THREAD
-                        Number of threads for mosdepth run (default: 1)
-  --oprefix OPREFIX     Suffix for filtered bed (default: pyeffg)
-  --verbose             Active verbose mode (default: False)
-  --version             Version number
-
-
-```
 
 ```bash
 python bin/pyTMB.py -h
@@ -137,6 +104,42 @@ optional arguments:
   --version             Version number
 ```
 
+```bash
+python3 ~/Documents/Tom/Pipelines/tmb/bin/pyEffGenomeSize.py -h
+
+usage: pyEffGenomeSize.py [-h] --bed BED --gtf GTF [--bam BAM] [--mosdepth]
+                          [--minCoverage MINCOVERAGE] [--minMapq MINMAPQ]
+                          [--filterNonCoding] [--filterCoding]
+                          [--featureTypes FEATURETYPES [FEATURETYPES ...]]
+                          [--saveIntermediates] [-t THREAD]
+                          [--oprefix OPREFIX] [--verbose] [--version]
+
+optional arguments:
+  -h, --help            show this help message and exit
+  --bed BED             BED file (.bed) (default: None)
+  --gtf GTF             GTF file for genome annotation (.gtf) (default: None)
+  --bam BAM             BAM file for mapping statistics (.bam) (default: None)
+  --mosdepth            enable mosdepth processing, require .bam file
+                        (default: False)
+  --minCoverage MINCOVERAGE
+                        minimum coverage of the region (default: 0)
+  --minMapq MINMAPQ     minimum coverage of the region (default: 0)
+  --filterNonCoding     Filter regions associated with non coding annotations
+                        (default: False)
+  --filterCoding        Filter regions associated with coding annotations
+                        (default: False)
+  --featureTypes FEATURETYPES [FEATURETYPES ...]
+                        List of Features (exon, gene, transcript, UTR, CDS) to
+                        keep (3rd column from gtf/gff). Required with
+                        --filterCoding argument (default: [])
+  --saveIntermediates   Save mosdepth intermediate files (default: False)
+  -t THREAD, --thread THREAD
+                        Number of threads for mosdepth run (default: 1)
+  --oprefix OPREFIX     Suffix for filtered bed (default: pyeffg)
+  --verbose             Active verbose mode (default: False)
+  --version             Version number
+```
+
 ## Configs
 
 Working with vcf files is usually not straighforward, and mainly depends on the variant caller and annotation tools/databases used.
@@ -180,6 +183,17 @@ The same is true for the `--cancerDb` parameter.
 ## Usage
 
 ## `pyTMB.py`:
+
+### General parameters:
+#### `-i `
+Input file (.vcf, .vcf.gz, .bcf)
+
+#### `--sample`
+Specify the sample ID to focus on, useful when dealing with multisample vcfs
+
+#### `--bed` and `--effGenomeSize`
+Specify either a sorted bed file with no header, or the size of the effective genome size to take in count.
+
 ### Filters
 
 #### `--vaf MINVAF`
@@ -242,7 +256,21 @@ This option allows to export a vcf file which only contains the variants used fo
 
 The option allows to export a vcf file with the tag **TMB_FILTERS** in the **INFO** field. This tag therefore contains the reason for which a variant would be filtered.
 
-## `pyTMB.py`:
+## `pyEffGenomeSize.py`:
+
+### General parameters:
+
+#### `--bed`
+The input bed from to filter. This file should be 0 based, sorted and with no header
+
+#### `--gtf`
+A sorted gtf file to extract annotations from, for example gencode.v19.annotation.gtf
+
+#### `--bam`
+A bam file from your experiment to extract mapping quality and coverage information
+
+#### `--mosdepth`
+To run mosdepth and extract regions with specific coverage and mapping quality. This is an optionnal parameters, but if used, it requires `--bam` parameter.
 
 ### Filters
 
