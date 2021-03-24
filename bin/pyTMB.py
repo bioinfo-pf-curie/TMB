@@ -34,7 +34,6 @@ python pyTMB.py -i ${VCF} --effGenomeSize 33280000 \
 --varConfig ${VAR_CONFIG} > TMB_results.log
 """
 
-import cyvcf2
 import argparse
 import sys
 import warnings
@@ -43,6 +42,7 @@ import yaml
 import numpy as np
 import os.path
 from datetime import date
+import cyvcf2
 
 """
 Load yaml file
@@ -301,7 +301,7 @@ if __name__ == "__main__":
         for sample in vcf.samples:
             count = count + 1
             if str(sample) == str(args.sample):
-                vcf = cyvcf2.VCF(args.vcf, samples = args.sample)
+                vcf = cyvcf2.VCF(args.vcf, samples=args.sample)
             elif count == len(vcf.samples):
                 print("Error: Name of the sample incorrect")
                 sys.exit(-1)
@@ -427,7 +427,7 @@ if __name__ == "__main__":
 
             # Non-coding variants
             if args.filterNonCoding and isAnnotatedAs(variant, infos=annotInfo, flags=dbFlags['isNonCoding'], sep=dbFlags['sep']):
-                 if not isAnnotatedAs(variant, infos=annotInfo, flags=dbFlags['isCoding'], sep=dbFlags['sep']):
+                if not isAnnotatedAs(variant, infos=annotInfo, flags=dbFlags['isCoding'], sep=dbFlags['sep']):
                     debugInfo = ",".join([debugInfo, "NONCODING"])
                     if not args.debug:
                         continue
