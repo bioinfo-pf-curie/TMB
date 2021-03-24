@@ -23,71 +23,134 @@ To do so, simply use:
 conda env create -f environment.yml -p PATH_TO_INSTALL
 ```
 
+### Recommendations
+
+In order to have homogenous VCF entry files, avoid VCF ambiguities and have reproducible results we recommend to normalize your VCF before running this script, especially if the VCF file contains Multi Nucleotide Variants (MNVs) or multiallelic variants.
+
+For that we suggest to use `bcftools norm -f FASTA -m- -o file_norm.vcf file` command.
+
 ### Implementation
 
 The idea behind this script is quite simple. All variants are scanned and filtered according to the criteria provided by the user. If a variant passes all the filters, it is therefore used for the TMB calculation. In other words, if no filters are provided, the script will simply count the number of variants.
 
-The TMB is defined as the number of variants over the size of the genomic region (in Mb). In order to calculate the size of the genome (ie. the `effectiveGenomeSize`), the user can provide a BED file (`--bed`) with the design of the assay. However, it is usually recommanded to adapt the genome size to the filters applied. For instance, if only coding variants are used, it would make sense to use only the genomic size of coding region for the TMB calculation. So far, **this is the user responsability to calculate the appropriate genome size** and to specify it with the `--effGenomeSize` parameter.
+The TMB is defined as the number of variants over the size of the genomic region (in Mb). In order to calculate the size of the genome (ie. the `effectiveGenomeSize`), the user can provide a BED file (`--bed`) with the design of the assay. This bed file should be ordered, 0 based and with no header. Another alternative is to use the other feature provided in this script.
+
+This tool also provides a script to create a bed file based on specific criterias such as annotations, coverage and mapping quality thresholds defined by the user (script in `bin/pyEffGenomeSize.py`).
+
+Indeed, it is usually recommended to adapt the genome size to the filters applied. For instance, if only coding variants are used, it would make sense to use only the genomic size of coding region for the TMB calculation. So far, **this is the user responsability to provide an intial bed file with corresponding genomic features.** and to specify it to the `pyEffGenomeSize.py` script or directly to the `--bed` parameter. The user can also provide the size of the bed with the `--effGenomeSize` parameter.
 
 
 ## Quick help
 
 ```bash
-python bin/pyTMB.py --help
+python bin/pyTMB.py -h
+
 usage: pyTMB.py [-h] [-i VCF] [--dbConfig DBCONFIG] [--varConfig VARCONFIG]
-                [--effGenomeSize EFFGENOMESIZE] [--bed BED]
-                [--vaf MINVAF] [--maf MAXMAF] [--minDepth MINDEPTH] [--minAltDepth MINALTDEPTH]
-                [--filterLowQual] [--filterIndels] [--filterCoding]
-                [--filterSplice] [--filterNonCoding] [--filterSyn]
-                [--filterNonSyn] [--filterCancerHotspot] [--filterPolym]
-                [--filterRecurrence] [--polymDb POLYMDB] [--cancerDb CANCERDB]
-                [--verbose] [--debug] [--export] [--version]
+                [--sample SAMPLE] [--effGenomeSize EFFGENOMESIZE] [--bed BED]
+                [--vaf VAF] [--maf MAF] [--minDepth MINDEPTH]
+                [--minAltDepth MINALTDEPTH] [--filterLowQual] [--filterIndels]
+                [--filterCoding] [--filterSplice] [--filterNonCoding]
+                [--filterSyn] [--filterNonSyn] [--filterCancerHotspot]
+                [--filterPolym] [--filterRecurrence] [--polymDb POLYMDB]
+                [--cancerDb CANCERDB] [--verbose] [--debug] [--export]
+                [--version]
 
 optional arguments:
-  -h, --help                          Show this help message and exit
-  -i VCF, --vcf VCF                   Input file (.vcf, .vcf.gz, .bcf)
-  --dbConfig DBCONFIG                 Databases config file
-  --varConfig VARCONFIG               Variant calling config file
+  -h, --help            show this help message and exit
+  -i VCF, --vcf VCF     Input file (.vcf, .vcf.gz, .bcf) (default: None)
+  --dbConfig DBCONFIG   Databases config file (default:
+                        ./config/databases.yml)
+  --varConfig VARCONFIG
+                        Variant calling config file (default:
+                        ./config/calling.yml)
 
-  --effGenomeSize EFFGENOMESIZE       Effective genome size
-  --bed BED                           Capture design to use if effGenomeSize is not defined (BED file)
+  --effGenomeSize EFFGENOMESIZE
+                        Effective genome size (default: None)
+  --bed BED             Capture design to use if effGenomeSize is not defined
+                        (BED file) (default: None)
+  --vaf VAF             Filter variants with Allelic Ratio <= vaf (default:
+                        0.05)
+  --maf MAF             Filter variants with MAF > maf (default: 0.001)
+  --minDepth MINDEPTH   Filter variants with depth < minDepth (default: 5)
+  --minAltDepth MINALTDEPTH
+                        Filter variants with alternative allele depth <=
+                        minAltDepth (default: 2)
+  --filterLowQual       Filter low quality (i.e not PASS) variant (default:
+                        False)
+  --filterIndels        Filter insertions/deletions (default: False)
+  --filterCoding        Filter Coding variants (default: False)
+  --filterSplice        Filter Splice variants (default: False)
+  --filterNonCoding     Filter Non-coding variants (default: False)
+  --filterSyn           Filter Synonymous variants (default: False)
+  --filterNonSyn        Filter Non-Synonymous variants (default: False)
+  --filterCancerHotspot
+                        Filter variants annotated as cancer hotspots (default:
+                        False)
+  --filterPolym         Filter polymorphism variants in genome databases. See
+                        --maf (default: False)
+  --filterRecurrence    Filter on recurrence values (default: False)
 
-  --vaf MINVAF                        Filter variants with Allelic Ratio < minVAF
-  --maf MINMAF                        Filter variants with MAF < maf
-  --minDepth MINDEPTH                 Filter variants with depth < minDepth
-  --minAltDepth MINALTDEPTH           FIlter alternative allele with depth < minAltDepth
-  --filterLowQual                     Filter low quality (i.e not PASS) variant
-  --filterIndels                      Filter insertions/deletions
-  --filterCoding                      Filter Coding variants
-  --filterSplice                      Filter Splice variants
-  --filterNonCoding                   Filter Non-coding variants
-  --filterSyn                         Filter Synonymous variants
-  --filterNonSyn                      Filter Non-Synonymous variants
-  --filterCancerHotspot               Filter variants annotated as cancer hotspots
-  --filterPolym                       Filter polymorphism variants in genome databases. See --minMAF
-  --filterRecurrence                  Filter on recurrence values
+  --polymDb POLYMDB     Databases used for polymorphisms detection (comma
+                        separated) (default: gnomad)
+  --cancerDb CANCERDB   Databases used for cancer hotspot annotation (comma
+                        separated) (default: cosmic)
 
-  --polymDb POLYMDB                   Databases used for polymorphisms detection (comma separated)
-  --cancerDb CANCERDB                 Databases used for cancer hotspot annotation (comma separated)
+  --sample SAMPLE       Specify the sample ID to focus on (default: None)
+  --debug               Export original VCF with TMB_FILTER tag (default:
+                        False)
+  --export              Export a VCF with the considered variants (default:
+                        False)
+  --verbose             Active verbose mode (default: False)
+  --version             Version number
+```
 
-  --verbose
-  --debug
-  --export
-  --version
+```bash
+python3 ~/Documents/Tom/Pipelines/tmb/bin/pyEffGenomeSize.py -h
 
+usage: pyEffGenomeSize.py [-h] --bed BED --gtf GTF [--bam BAM] [--mosdepth]
+                          [--minCoverage MINCOVERAGE] [--minMapq MINMAPQ]
+                          [--filterNonCoding] [--filterCoding]
+                          [--featureTypes FEATURETYPES [FEATURETYPES ...]]
+                          [--saveIntermediates] [-t THREAD]
+                          [--oprefix OPREFIX] [--verbose] [--version]
+
+optional arguments:
+  -h, --help            show this help message and exit
+  --bed BED             BED file (.bed) (default: None)
+  --gtf GTF             GTF file for genome annotation (.gtf) (default: None)
+  --bam BAM             BAM file for mapping statistics (.bam) (default: None)
+  --mosdepth            enable mosdepth processing, require .bam file
+                        (default: False)
+  --minCoverage MINCOVERAGE
+                        minimum coverage of the region (default: 0)
+  --minMapq MINMAPQ     minimum coverage of the region (default: 0)
+  --filterNonCoding     Filter regions associated with non coding annotations
+                        (default: False)
+  --filterCoding        Filter regions associated with coding annotations
+                        (default: False)
+  --featureTypes FEATURETYPES [FEATURETYPES ...]
+                        List of Features (exon, gene, transcript, UTR, CDS) to
+                        keep (3rd column from gtf/gff). Required with
+                        --filterCoding argument (default: [])
+  --saveIntermediates   Save mosdepth intermediate files (default: False)
+  -t THREAD, --thread THREAD
+                        Number of threads for mosdepth run (default: 1)
+  --oprefix OPREFIX     Suffix for filtered bed (default: pyeffg)
+  --verbose             Active verbose mode (default: False)
+  --version             Version number
 ```
 
 ## Configs
 
 Working with vcf files is usually not straighforward, and mainly depends on the variant caller and annotation tools/databases used.
-In order to make this tool as flexible as possible, we decided to set up **two configurations files** to defined with fields as to be checked and in which case.
+In order to make this tool as flexible as possible, we decided to set up **two configurations files** to defined which fields have to be checked and in which case.
 
-The `--dbConfig` file described all details about annotation. As an exemple, we provide some configurations for **Annovar** (*conf/annovar.yml*)
-and **snpEff** (*conf/snpeff.yaml*) tool.  
+The `--dbConfig` file described all details about annotation. As an exemple, we provide some configurations for **Annovar** (*config/annovar.yml*)
+and **snpEff** (*config/snpeff.yaml*) tool.  
 These files can be customized by the user.
 
 In the same way, all parameters which are variant caller specific can be set up in another config file using the `--varConfig` parameter.
-Config files for **Varscan2** (*conf/varscan2.yml*) and **Mutect2** (*conf/mutect2.yml*) are provided as examples.
+Config files for **Varscan2** (*config/varscan2.yml*) and **Mutect2** (*config/mutect2.yml*) are provided as examples.
 
 The `yaml` config files must list the different **keys:values** for each function.
 As an exemple, to assess whether a variant is coding, the programm will used (for Annovar);
@@ -119,18 +182,30 @@ The same is true for the `--cancerDb` parameter.
 
 ## Usage
 
+## `pyTMB.py`:
+
+### General parameters:
+#### `-i `
+Input file (.vcf, .vcf.gz, .bcf)
+
+#### `--sample`
+Specify the sample ID to focus on, useful when dealing with multisample vcfs
+
+#### `--bed` and `--effGenomeSize`
+Specify either a sorted bed file with no header, or the size of the effective genome size to take in count.
+
 ### Filters
 
 #### `--vaf MINVAF`
-Filter variants with Allelic Ratio < minVAF. Note the field used to get the Allelic Ratio field is defined in the *conf/caller.yml* file.
+Filter variants with Allelic Ratio < minVAF. Note the field used to get the Allelic Ratio field is defined in the *config/caller.yml* file.
 In this case, the programm will first look for this information in the **FORMAT** field, and then in the **INFO** field.
 
 #### `--maf MAXMAF`
 Filter variants with MAF < maf. Note the databases used to check the Min Allele Frequency are set using the `--polymDb`
-parameters and the *conf/databases.yml* file.
+parameters and the *config/databases.yml* file.
 
 #### `--minDepth MINDEPTH`
-Filter variants with depth < minDepth. Note the field used to get the depth is defined in the *conf/caller.yml* file.
+Filter variants with depth < minDepth. Note the field used to get the depth is defined in the *config/caller.yml* file.
 In this case, the programm will first look for this information in the **FORMAT** field, and then in the **INFO** field.
 
 #### `--minAltDepth MINALTDEPTH`
@@ -143,31 +218,31 @@ Filter variants for which is the **FILTER** field is not **PASS** or for which t
 Filter insertions/deletions variants.
 
 #### `--filterCoding`
-Filter Coding variants as defined in the *conf/databases.yml* field.
+Filter Coding variants as defined in the *config/databases.yml* field.
 
 #### `--filterSplice`
-Filter Splice variants as defined in the *conf/databases.yml* field.
+Filter Splice variants as defined in the *config/databases.yml* field.
 
 #### `--filterNonCoding`
-Filter Non-coding variants as defined in the *conf/databases.yml* field.
+Filter Non-coding variants as defined in the *config/databases.yml* field.
 
 #### `--filterSyn`
-Filter Synonymous variants as defined in the *conf/databases.yml* field.
+Filter Synonymous variants as defined in the *config/databases.yml* field.
 
 #### `--filterNonSyn`
-Filter Non-Synonymous variants as defined in the *conf/databases.yml* field.
+Filter Non-Synonymous variants as defined in the *config/databases.yml* field.
 
 #### `--filterCancerHotspot`
-Filter variants annotated as cancer hotspots as defined in the *conf/databases.yml* field.
+Filter variants annotated as cancer hotspots as defined in the *config/databases.yml* field.
 So far, all variants with a 'cancer' annotation (for instance with a COSMIC Id) will be removed.
 
 #### `--filterPolym`
 Filter polymorphism variants from genome databases. The databases to considered can be listed with the `--polymDb` parameter.
-The fields to scan for each database are defined in the *conf/databases.yml* file and the population frequency is compared with the `--minMAF` field.
+The fields to scan for each database are defined in the *config/databases.yml* file and the population frequency is compared with the `--minMAF` field.
 
 #### `--filterRecurrence`
 Filter on recurrence values (for instance, intra-run occurence). In this case, the vcf file must contains the recurrence information
-which can be defined the *conf/databases.yml* file.
+which can be defined the *config/databases.yml* file.
 
 ## Outputs
 
@@ -181,10 +256,48 @@ This option allows to export a vcf file which only contains the variants used fo
 
 The option allows to export a vcf file with the tag **TMB_FILTERS** in the **INFO** field. This tag therefore contains the reason for which a variant would be filtered.
 
+## `pyEffGenomeSize.py`:
 
-## Usage and recommandations
+### General parameters:
 
-Here is a list of recommanded parameters for different user cases.
+#### `--bed`
+The input bed from to filter. This file should be 0 based, sorted and with no header
+
+#### `--gtf`
+A sorted gtf file to extract annotations from, for example gencode.v19.annotation.gtf
+
+#### `--bam`
+A bam file from your experiment to extract mapping quality and coverage information
+
+#### `--mosdepth`
+To run mosdepth and extract regions with specific coverage and mapping quality. This is an optionnal parameters, but if used, it requires `--bam` parameter.
+
+### Filters
+
+#### `--minCoverage`
+
+Define the minimum coverage accepted for each region of the bed file
+
+#### `--minMapq`
+
+Mapping quality threshold. reads with a mapping quality less than this are ignored
+
+#### `--filterNonCoding`
+
+This filter removes regions considered as non coding from the gtf and bed files to only keep exonic regions.
+
+#### `--filterCoding`
+
+This filter removes regions considered as coding based on the transcript_type field in the gtf.
+This filter **requires** the parameter `featureTypes`
+
+#### `--featureTypes`
+
+This parameter offers the possibility to choose one or multiple features to select from the following ("exon", "gene", "transcript", "UTR", "CDS") to keep in the final bed file.
+
+## Usage and recommendations
+
+Here is a list of recommended parameters for different user cases.
 
 ### Gene Panel
 
@@ -197,16 +310,15 @@ Let's calculated the TMB on a gene panel vcf file (coding size = 1.59Mb, caller 
 In this case, a typical usage would be :
 
 ```
-python pyTMB.py -i ${VCF} \
---dbConfig conf/annovar.yml \
---varConfig conf/varscan.yml \
---minDepth 100 \
+python pyTMB.py -i ${VCF} --effGenomeSize 1590000 \
+--dbConfig config/annovar.yml \
+--varConfig config/varscan.yml \
+--minMAF 0.001 --minDepth 100 --minAltDepth 2\
 --filterLowQual \
 --filterNonCoding \
 --filterSplice \
 --filterSyn \
---filterPolym --minMAF 0.001 --polymDb 1k,gnomad \
---effGenomeSize 1590000 \
+--filterPolym --polymDb 1k,gnomad \
 --export > TMB_results.log
 ```
 
@@ -219,14 +331,13 @@ In the case of a WES variant calling using Mutect2 as variant caller and Snpeff 
 
 ```
 python pyTMB.py -i ${VCF} --effGenomeSize 33280000 \
---dbConfig conf/snpeff.yml \
---varConfig conf/mutect2.yml \
---vaf 0.05 --maf 0.001 --minDepth 20 --minAltDepth 3\
+--dbConfig config/snpeff.yml \
+--varConfig config/mutect2.yml \
+--vaf 0.05 --maf 0.001 --minDepth 20 --minAltDepth 2 \
 --filterLowQual \
 --filterNonCoding \
 --filterSyn \
---filterPolym \
---polymDb 1k,gnomad  > TMB_results.log
+--filterPolym --polymDb 1k,gnomad  > TMB_results.log
 ```
 
 ### Credits

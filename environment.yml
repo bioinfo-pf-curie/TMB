@@ -9,3 +9,5 @@ dependencies:
   - conda-forge::python=3.6.10
   - bioconda::cyvcf2=0.11.7
   - conda-forge::pyyaml=5.3.1
+  - bioconda::mosdepth=0.2.6
+  - bioconda::pybedtools=0.8.1

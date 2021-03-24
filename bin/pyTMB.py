@@ -14,7 +14,7 @@
 #
 ##############################################################################
 
-__version__ = '1.2.0'
+__version__ = '1.3.0'
 
 """
 This script is designed to calculate a TMB score from a VCF file.
@@ -24,7 +24,7 @@ Let's defined a TMB as a score using PASS, non-synonymous, coding, non polymorph
 In this case, a typical usage would be :
 
 python pyTMB.py -i ${VCF} --effGenomeSize 33280000 \
---vaf 0.05 --maf 0.001 --minDepth 20 --minAltDepth 3\
+--vaf 0.05 --maf 0.001 --minDepth 20 --minAltDepth 2\
 --filterLowQual \
 --filterNonCoding \
 --filterSyn \
@@ -34,7 +34,6 @@ python pyTMB.py -i ${VCF} --effGenomeSize 33280000 \
 --varConfig ${VAR_CONFIG} > TMB_results.log
 """
 
-import cyvcf2
 import argparse
 import sys
 import warnings
@@ -43,6 +42,7 @@ import yaml
 import numpy as np
 import os.path
 from datetime import date
+import cyvcf2
 
 """
 Load yaml file
@@ -246,7 +246,7 @@ Parse inputs
 
 def argsParse():
 
-    parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument("-i", "--vcf", help="Input file (.vcf, .vcf.gz, .bcf)")
 
     # Configs
@@ -296,14 +296,22 @@ if __name__ == "__main__":
 
     # Load Data
     if args.sample is not None:
-        vcf = cyvcf2.VCF(args.vcf, samples=args.sample)
+        vcf = cyvcf2.VCF(args.vcf)
+        count = 0
+        for sample in vcf.samples:
+            count = count + 1
+            if str(sample) == str(args.sample):
+                vcf = cyvcf2.VCF(args.vcf, samples=args.sample)
+            elif count == len(vcf.samples):
+                print("Error: Name of the sample incorrect")
+                sys.exit(-1)
     else:
         vcf = cyvcf2.VCF(args.vcf)
 
     # Sample name
     if len(vcf.samples) > 1:
         sys.stderr.write("Error: " + str(len(vcf.samples)) +
-                         " sample detected. This version is designed for a single sample !")
+                         " sample detected. This version is designed for a single sample ! \n")
         sys.exit(-1)
 
     # Ouptuts
@@ -334,7 +342,7 @@ if __name__ == "__main__":
 
     varCounter = 0
     varNI = 0
-    varTMB = 0   
+    varTMB = 0
     for variant in vcf:
         varCounter += 1
         if (varCounter % 1000 == 0 and args.verbose):
@@ -350,6 +358,7 @@ if __name__ == "__main__":
             # Get annotation INFO as a list of dict
             if dbFlags['tag'] != '':
                 annotInfo = infoTag2dl(variant.INFO.get(dbFlags['tag']))
+
             else:
                 annotInfo = info2dl(variant.INFO)
 
@@ -405,9 +414,10 @@ if __name__ == "__main__":
 
             # Coding variants
             if args.filterCoding and isAnnotatedAs(variant, infos=annotInfo, flags=dbFlags['isCoding'], sep=dbFlags['sep']):
-                debugInfo = ",".join([debugInfo, "CODING"])
-                if not args.debug:
-                    continue
+                if not isAnnotatedAs(variant, infos=annotInfo, flags=dbFlags['isNonCoding'], sep=dbFlags['sep']):
+                    debugInfo = ",".join([debugInfo, "CODING"])
+                    if not args.debug:
+                        continue
 
             # Splice variants
             if args.filterSplice and isAnnotatedAs(variant, infos=annotInfo, flags=dbFlags['isSplicing'], sep=dbFlags['sep']):
@@ -417,21 +427,24 @@ if __name__ == "__main__":
 
             # Non-coding variants
             if args.filterNonCoding and isAnnotatedAs(variant, infos=annotInfo, flags=dbFlags['isNonCoding'], sep=dbFlags['sep']):
-                debugInfo = ",".join([debugInfo, "NONCODING"])
-                if not args.debug:
-                    continue
+                if not isAnnotatedAs(variant, infos=annotInfo, flags=dbFlags['isCoding'], sep=dbFlags['sep']):
+                    debugInfo = ",".join([debugInfo, "NONCODING"])
+                    if not args.debug:
+                        continue
 
             # Synonymous
             if args.filterSyn and isAnnotatedAs(variant, infos=annotInfo, flags=dbFlags['isSynonymous'], sep=dbFlags['sep']):
-                debugInfo = ",".join([debugInfo, "SYN"])
-                if not args.debug:
-                    continue
+                if not isAnnotatedAs(variant, infos=annotInfo, flags=dbFlags['isNonSynonymous'], sep=dbFlags['sep']):
+                    debugInfo = ",".join([debugInfo, "SYN"])
+                    if not args.debug:
+                        continue
 
             # Non synonymous
             if args.filterNonSyn and isAnnotatedAs(variant, infos=annotInfo, flags=dbFlags['isNonSynonymous'], sep=dbFlags['sep']):
-                debugInfo = ",".join([debugInfo, "NON_SYN"])
-                if not args.debug:
-                    continue
+                if not isAnnotatedAs(variant, infos=annotInfo, flags=dbFlags['isSynonymous'], sep=dbFlags['sep']):
+                    debugInfo = ",".join([debugInfo, "NON_SYN"])
+                    if not args.debug:
+                        continue
 
             # Hotspot
             if args.filterCancerHotspot:
@@ -489,6 +502,11 @@ if __name__ == "__main__":
 
     # Calculate TMB
     TMB = round(float(varTMB)/(float(effGS)/1e6), 2)
+
+    # No Annotation
+    if varNI == varCounter:
+        print("/!\ Warning: No Annotation detected. Is your file annotated ?")
+        sys.exit(-1)
 
     # Output
     print("pyTMB version=", __version__)
