@@ -38,7 +38,7 @@ bcftools norm -f FASTA -m- -o file_norm.vcf file
 The idea behind this script is quite simple. All variants are scanned and filtered according to the criteria provided by the user. If a variant passes all the filters, it is therefore used for the TMB calculation. In other words, if no filters are provided, the script will simply count the number of variants.
 
 The TMB is defined as the number of variants over the size of the genomic region (in Mb). In order to calculate the size of the genome (ie. the `effectiveGenomeSize`), the user can provide a BED file (`--bed`) with the design of the assay. This BED file should be ordered, 0 based and with no header. Another alternative is to specify the size of genomic regions using `--effGenomeSize`.  Importantly, **this is the user responsability to provide the BED corresponding to the experiments.**
-In addition, we provide the `pyEffGenomicSize.py` script to calculate this genome effective size from a bed file according to a few criterias such as annotations, coverage and mapping quality thresholds defined by the user (script in `bin/pyEffGenomeSize.py`).
+In addition, we provide the `pyEffGenomicSize.py` script to calculate this genome effective size from a BED file according to a few criterias such as annotations, coverage and mapping quality thresholds defined by the user (script in `bin/pyEffGenomeSize.py`).
 
 ## Quick help
 
@@ -156,7 +156,7 @@ Input file (.vcf, .vcf.gz, .bcf)
 Specify the sample ID to focus on, useful when dealing with multisample vcfs
 
 #### `--bed` and `--effGenomeSize`
-Specify either a sorted bed file with no header, or the size of the effective genome size to take in count.
+Specify either a sorted BED file with no header, or the size of the effective genome size to take in count.
 
 ### Filters
 
@@ -222,7 +222,7 @@ The option allows to export a vcf file with the tag **TMB_FILTERS** in the **INF
 
 ## `pyEffGenomeSize.py`:
 
-This tool is designed to calculate the effective genome size from a BED file. This effective size is an important parameter of TMB calculation which can have a strong impact on the results. For instance, if only coding variants are used, it would make sense to use only the genomic size of coding region for the TMB calculation. So far, **this is the user responsability to provide an intial bed file with corresponding genomic features.** and to specify it to the `pyEffGenomeSize.py` script or directly to the `--bed` parameter. The user can also provide the size of the bed with the `--effGenomeSize` parameter.
+This tool is designed to calculate the effective genome size from a BED file. This effective size is an important parameter of TMB calculation which can have a strong impact on the results. For instance, if only coding variants are used, it would make sense to use only the genomic size of coding region for the TMB calculation. So far, **this is the user responsability to provide an intial BED file with corresponding genomic features.** and to specify it to the `pyEffGenomeSize.py` script or directly to the `--bed` parameter. The user can also provide the size of the BED with the `--effGenomeSize` parameter.
 
 
 
@@ -266,7 +266,7 @@ optional arguments:
 ### General parameters:
 
 #### `--bed`
-The input bed from to filter. This file should be 0 based, sorted and with no header
+The input BED from to filter. This file should be 0 based, sorted and with no header
 
 #### `--gtf`
 A sorted gtf file to extract annotations from, for example gencode.v19.annotation.gtf
@@ -281,7 +281,7 @@ To run mosdepth and extract regions with specific coverage and mapping quality. 
 
 #### `--minCoverage`
 
-Define the minimum coverage accepted for each region of the bed file
+Define the minimum coverage accepted for each region of the BED file
 
 #### `--minMapq`
 
@@ -289,7 +289,7 @@ Mapping quality threshold. reads with a mapping quality less than this are ignor
 
 #### `--filterNonCoding`
 
-This filter removes regions considered as non coding from the gtf and bed files to only keep exonic regions.
+This filter removes regions considered as non coding from the gtf and BED files to only keep exonic regions.
 
 #### `--filterCoding`
 
@@ -298,7 +298,7 @@ This filter **requires** the parameter `featureTypes`
 
 #### `--featureTypes`
 
-This parameter offers the possibility to choose one or multiple features to select from the following ("exon", "gene", "transcript", "UTR", "CDS") to keep in the final bed file.
+This parameter offers the possibility to choose one or multiple features to select from the following ("exon", "gene", "transcript", "UTR", "CDS") to keep in the final BED file.
 
 ## Usage and recommendations
 
