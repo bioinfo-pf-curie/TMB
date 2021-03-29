@@ -347,7 +347,7 @@ python pyTMB.py -i ${VCF} --effGenomeSize 33280000 \
 
 ### Credits
 
-This pipeline has been written by the bioinformatics core facility in close collaboration with the Clinical Bioinformatics and the Genetics Service of the Institut Curie.
+This pipeline has been written by the bioinformatics core facility in close collaboration with the Clinical Bioinformatics and the Genetics Service of the Institut Curie. Many thanks to the seqOIA-IT team for their help in the development and for the extensive testing of the tool !
 
 ### Contacts
 
