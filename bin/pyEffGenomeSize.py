@@ -67,10 +67,9 @@ def filterGtf(interval, featuretype):
     """
     function using pybedtools nomenclature to filter transcript_types from gtf file with defined features.
     """
-    if not interval.attrs:
-        print("error")
-    if interval.attrs['transcript_type'] in featuretype:
-        return interval.attrs['transcript_type']
+    if 'transcript_type' in interval.attrs:
+        if interval.attrs['transcript_type'] in featuretype:
+            return interval.attrs['transcript_type']
     return False
 
 def filterFeatureGtf(interval, features):
@@ -139,7 +138,13 @@ if __name__ == "__main__":
         sys.stderr.write("Error: gtf doesn't have transcript_type info ! Can't filter this file \n")
         sys.exit(-1)
 
-
+    #Warning if no transcript_type info in gtf
+    count = 0
+    for interval in myGtf:
+        if 'transcript_type' not in interval.attrs:
+            count += 1
+    if count  & count > 0:
+        print("Warning: {} annotations not used because no transcript_type info".format(count))
 
     # Filtering step:
     # List of annotation from transcript_type field in gtf:
