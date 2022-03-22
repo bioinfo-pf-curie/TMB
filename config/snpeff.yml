@@ -105,6 +105,11 @@ polymDb:
     - kg_EAS_AF
     - kg_EUR_AF
     - kg_SAS_AF
+    - KG_AF_GLOBAL
 
   gnomad:
     - gnomAD_genomes_AF
+    - AF
+
+  esp:
+    - ESP_AF_GLOBAL

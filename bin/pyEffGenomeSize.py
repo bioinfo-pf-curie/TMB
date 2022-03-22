@@ -143,7 +143,7 @@ if __name__ == "__main__":
     for interval in myGtf:
         if 'transcript_type' not in interval.attrs:
             count += 1
-    if count  & count > 0:
+    if count & count > 0:
         print("Warning: {} annotations not used because no transcript_type info".format(count))
 
     # Filtering step:

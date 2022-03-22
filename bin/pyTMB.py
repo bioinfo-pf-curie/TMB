@@ -142,7 +142,7 @@ def isPolym(v, infos, flags, val):
                 if i is not None and i != ".":
                     if float(i) >= float(val):
                         return True
-        elif subINFO[key] is not None and subINFO[key] != ".":
+        elif subINFO[key] is not None and subINFO[key] != "." and subINFO[key] != "NA":
             if float(subINFO[key]) >= float(val):
                 return True
     return(False)
