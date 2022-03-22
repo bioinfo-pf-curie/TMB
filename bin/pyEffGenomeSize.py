@@ -67,8 +67,9 @@ def filterGtf(interval, featuretype):
     """
     function using pybedtools nomenclature to filter transcript_types from gtf file with defined features.
     """
-    if interval.attrs['transcript_type'] in featuretype:
-        return interval.attrs['transcript_type']
+    if 'transcript_type' in interval.attrs:
+        if interval.attrs['transcript_type'] in featuretype:
+            return interval.attrs['transcript_type']
     return False
 
 def filterFeatureGtf(interval, features):
@@ -111,7 +112,7 @@ def getEffGenomeSizeFromMosdepth(infile):
             totgs += intl
     f.close()
     print("## File Name: {}".format(infile))
-    print("## Total region = {}".format(totgs))
+    print("## Total region size = {}".format(totgs))
     if args.mosdepth:
         print("## Callable region = {} ({}%)\n".format(effgs, round(effgs/totgs*100, 3)))
 
@@ -120,16 +121,30 @@ if __name__ == "__main__":
     # Parse inputs
     args = argsParse()
 
-    # Warnings:
-    if (args.bam or args.minCoverage or args.minMapq) and not args.mosdepth:
-        sys.stderr.write("Error: --mosdepth is required if --bam, --minCoverage or --minMapq is used.\n")
-        sys.exit(-1)
-
     # Creating pybedtools objects
     if args.verbose:
         print("[RUNNING INFO]: Loading data\n")
     myBed = pbt.BedTool(args.bed)
     myGtf = pbt.BedTool(args.gtf)
+
+    # Warnings:
+    if (args.bam or args.minCoverage or args.minMapq) and not args.mosdepth:
+        sys.stderr.write("Error: --mosdepth is required if --bam, --minCoverage or --minMapq is used.\n")
+        sys.exit(-1)
+    if not (args.filterNonCoding or args.filterCoding):
+         sys.stderr.write("Error: --filterCoding or --filterNonCoding is required ! \n")
+         sys.exit(-1)
+    if str(myGtf[2]).find('transcript_type') == -1:
+        sys.stderr.write("Error: gtf doesn't have transcript_type info ! Can't filter this file \n")
+        sys.exit(-1)
+
+    #Warning if no transcript_type info in gtf
+    count = 0
+    for interval in myGtf:
+        if 'transcript_type' not in interval.attrs:
+            count += 1
+    if count & count > 0:
+        print("Warning: {} annotations not used because no transcript_type info".format(count))
 
     # Filtering step:
     # List of annotation from transcript_type field in gtf:
