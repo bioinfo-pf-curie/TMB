@@ -132,8 +132,8 @@ if __name__ == "__main__":
         sys.stderr.write("Error: --mosdepth is required if --bam, --minCoverage or --minMapq is used.\n")
         sys.exit(-1)
     if not (args.filterNonCoding or args.filterCoding):
-         sys.stderr.write("Error: --filterCoding or --filterNonCoding is required ! \n")
-         sys.exit(-1)
+        sys.stderr.write("Error: --filterCoding or --filterNonCoding is required ! \n")
+        sys.exit(-1)
     if str(myGtf[2]).find('transcript_type') == -1:
         sys.stderr.write("Error: gtf doesn't have transcript_type info ! Can't filter this file \n")
         sys.exit(-1)

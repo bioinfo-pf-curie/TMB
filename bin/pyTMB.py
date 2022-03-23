@@ -14,7 +14,7 @@
 #
 ##############################################################################
 
-__version__ = '1.3.0'
+__version__ = '1.4.0'
 
 """
 This script is designed to calculate a TMB score from a VCF file.
@@ -48,7 +48,6 @@ import cyvcf2
 Load yaml file
 """
 
-
 def loadConfig(infile):
 
     with open(infile, 'r') as stream:
@@ -57,11 +56,9 @@ def loadConfig(infile):
         except:
             raise
 
-
 """
 Extract VCF column name with multi-Allelic information
 """
-
 
 def getMultiAlleleHeader(vcf):
 
@@ -76,11 +73,9 @@ def getMultiAlleleHeader(vcf):
                 INFO.append(i['ID'])
     return(dict(FORMAT=FORMAT, INFO=INFO))
 
-
 """
 Calculate Effective Genome Size from a BED file
 """
-
 
 def getEffGenomeSizeFromBed(infile, verbose=False):
 
@@ -105,11 +100,9 @@ def getEffGenomeSizeFromBed(infile, verbose=False):
     bedhandle.close()
     return effgs
 
-
 """
 Check if a variant has the provided annotation flags
 """
-
 
 def isAnnotatedAs(v, infos, flags, sep):
 
@@ -127,11 +120,9 @@ def isAnnotatedAs(v, infos, flags, sep):
                         return(True)
     return(False)
 
-
 """
 Check if a variant is in a genomeDb with a MAF > val
 """
-
 
 def isPolym(v, infos, flags, val):
 
@@ -147,11 +138,25 @@ def isPolym(v, infos, flags, val):
                 return True
     return(False)
 
+"""
+Get MAF value
+"""
+
+def getMaf(v, infos, flags, val, maf_list):
+
+    subINFO = subsetINFO(infos, keys=flags)
+    for key in subINFO:
+        if type(subINFO[key]) is tuple:
+            for i in subINFO[key]:
+                if i is not None and i != ".":
+                    maf_list.append(i)
+        elif subINFO[key] is not None and subINFO[key] != "." and subINFO[key] != "NA":
+            maf_list.append(float(subINFO[key]))
+    return(maf_list)
 
 """
 Check if a variant is annotated as a cancer hotspot
 """
-
 
 def isCancerHotspot(v, infos, flags):
 
@@ -161,14 +166,11 @@ def isCancerHotspot(v, infos, flags):
             return True
     return(False)
 
-
 """
 Subset the annotation information to a few key values
 """
 
-
 def subsetINFO(annot, keys):
-
     if isinstance(annot, list):
         subsetInfo = []
         for i in range(0, len(annot)):
@@ -179,12 +181,10 @@ def subsetINFO(annot, keys):
         subsetInfo = dict((k, annot[k]) for k in keys if k in annot)
     return(subsetInfo)
 
-
 """
 Format the INFO field from snpEff and return a list of dict
 ie. snpEff
 """
-
 
 def infoTag2dl(INFO):
 
@@ -197,24 +197,20 @@ def infoTag2dl(INFO):
             annotInfo.append(dictannot)
         return(annotInfo)
 
-
 """
 Format the INFO field from ANNOVAR and return a list of dict
 ie. annovar
 """
-
 
 def info2dl(INFO):
 
     if INFO is not None:
         return [dict(INFO)]
 
-
 """
 Get a tag value from either the format field or the info field
 Return a 2D numpy array
 """
-
 
 def getTag(v, tag):
 
@@ -314,7 +310,7 @@ if __name__ == "__main__":
                          " sample detected. This version is designed for a single sample ! \n")
         sys.exit(-1)
 
-    # Ouptuts
+    # Outputs
     if args.export:
         wx = cyvcf2.Writer(re.sub(r'\.vcf$|\.vcf.gz$|\.bcf',
                                   '_export.vcf', os.path.basename(args.vcf)), vcf)
@@ -339,10 +335,11 @@ if __name__ == "__main__":
     else:
         effGS = args.effGenomeSize
 
-
     varCounter = 0
     varNI = 0
     varTMB = 0
+    freqs_vaf = []
+    freqs_maf = []
     for variant in vcf:
         varCounter += 1
         if (varCounter % 1000 == 0 and args.verbose):
@@ -385,6 +382,8 @@ if __name__ == "__main__":
 
             # Variant Allele Frequency
             fval = getTag(variant, callerFlags['freq'])
+            freqs_vaf.append(float(fval))
+
             if fval is not None and len(fval[fval <= args.vaf]) == len(variant.ALT):
                 debugInfo = ",".join([debugInfo, "VAF"])
                 if not args.debug:
@@ -466,6 +465,7 @@ if __name__ == "__main__":
                 for db in args.polymDb.split(','):
                     for x in dbFlags['polymDb'][db]:
                         fdb.append(x)
+                freqs_maf_2 = getMaf(variant, infos=dbInfo, flags=fdb, val=args.maf, maf_list=freqs_maf)
 
                 if isPolym(variant, infos=dbInfo, flags=fdb, val=args.maf):
                     debugInfo = ",".join([debugInfo, "POLYM"])
@@ -481,7 +481,7 @@ if __name__ == "__main__":
 
         except:
             warnflag = str(variant.CHROM) + ":" + str(variant.start) + "-" + str(variant.end)
-            warnings.warn("Warning : variant ", warnflag, " raises an error. Skipped so far ...")
+            warnings.warn("Warning : variant {} raises an error. Skipped so far ...".format(warnflag))
             raise
 
         # Still alive
@@ -494,6 +494,30 @@ if __name__ == "__main__":
             variant.INFO["TMB_FILTERS"] = re.sub(r'^,', '', debugInfo)
             wd.write_record(variant)
 
+    #test VAF argument:
+    if 1 < args.vaf <= 100 and 0 <= min(freqs_vaf) <= 1 and 0 <= max(freqs_vaf) <= 1:
+        sys.stderr.write("Error : wrong vaf threshold, vaf is not in percentage and should be between 0 and 1\n")
+        sys.exit()
+
+    elif 0 <= args.vaf <= 1 and 0 <= min(freqs_vaf) <= 100 and max(freqs_vaf) > 1 and args.vaf != 1:
+        sys.stderr.write("Error : wrong vaf threshold, vaf is in percentage and should be between 0 and 100\n")
+        sys.exit()
+
+    elif args.vaf == 1 and max(freqs_vaf) > 1:
+        pass
+
+    #test MAF argument:
+    if 1 < args.maf <= 100 and 0 <= min(freqs_maf_2) <= 1 and 0 <= max(freqs_maf_2) <= 1:
+        sys.stderr.write("Error : wrong maf threshold, maf is not in percentage and should be between 0 and 1\n")
+        sys.exit()
+
+    elif 0 <= args.maf <= 1 and 0 <= min(freqs_maf_2) <= 100 and max(freqs_maf_2) > 1 and args.maf != 1:
+        sys.stderr.write("Error : wrong maf threshold, maf is in percentage and should be between 0 and 100\n")
+        sys.exit()
+
+    elif args.maf == 1 and max(freqs_maf_2) > 1:
+        pass
+
     if args.export:
         wx.close()
     if args.debug:
@@ -505,12 +529,15 @@ if __name__ == "__main__":
 
     # No Annotation
     if varNI == varCounter:
-        print("/!\ Warning: No Annotation detected. Is your file annotated ?")
+        print("Warning: No Annotation detected. Is your file annotated ?")
         sys.exit(-1)
 
     # Output
     print("pyTMB version=", __version__)
     print("When=", date.today())
+    print("")
+    print("Input=", args.vcf)
+    print("Sample=", args.sample)
     print("")
     print("Config caller=", args.varConfig)
     print("Config databases=", args.dbConfig)
