@@ -20,7 +20,7 @@ We provide a `conda` file to build a simple python environment.
 To do so, simply use:
 
 ```
-conda env create -f environment.yml -p PATH_TO_INSTALL
+conda env create -f environment.yml
 ```
 
 ### Recommendations
@@ -45,7 +45,7 @@ In addition, we provide the `pyEffGenomicSize.py` script to calculate this genom
 ```bash
 python bin/pyTMB.py -h
 
-usage: pyTMB.py [-h] [-i VCF] [--dbConfig DBCONFIG] [--varConfig VARCONFIG]
+usage: pyTMB.py [-h] -i VCF --dbConfig DBCONFIG --varConfig VARCONFIG
                 [--sample SAMPLE] [--effGenomeSize EFFGENOMESIZE] [--bed BED]
                 [--vaf VAF] [--maf MAF] [--minDepth MINDEPTH]
                 [--minAltDepth MINALTDEPTH] [--filterLowQual] [--filterIndels]
@@ -58,23 +58,21 @@ usage: pyTMB.py [-h] [-i VCF] [--dbConfig DBCONFIG] [--varConfig VARCONFIG]
 optional arguments:
   -h, --help            show this help message and exit
   -i VCF, --vcf VCF     Input file (.vcf, .vcf.gz, .bcf) (default: None)
-  --dbConfig DBCONFIG   Databases config file (default:
-                        ./config/databases.yml)
+  --dbConfig DBCONFIG   Databases config file (default: None)
   --varConfig VARCONFIG
-                        Variant calling config file (default:
-                        ./config/calling.yml)
-
+                        Variant calling config file (default: None)
+  --sample SAMPLE       Specify the sample ID to focus on (default: None)
   --effGenomeSize EFFGENOMESIZE
                         Effective genome size (default: None)
   --bed BED             Capture design to use if effGenomeSize is not defined
                         (BED file) (default: None)
   --vaf VAF             Filter variants with Allelic Ratio <= vaf (default:
-                        0.05)
-  --maf MAF             Filter variants with MAF > maf (default: 0.001)
-  --minDepth MINDEPTH   Filter variants with depth < minDepth (default: 5)
+                        None)
+  --maf MAF             Filter variants with MAF > maf (default: None)
+  --minDepth MINDEPTH   Filter variants with depth < minDepth (default: None)
   --minAltDepth MINALTDEPTH
                         Filter variants with alternative allele depth <=
-                        minAltDepth (default: 2)
+                        minAltDepth (default: None)
   --filterLowQual       Filter low quality (i.e not PASS) variant (default:
                         False)
   --filterIndels        Filter insertions/deletions (default: False)
@@ -89,21 +87,18 @@ optional arguments:
   --filterPolym         Filter polymorphism variants in genome databases. See
                         --maf (default: False)
   --filterRecurrence    Filter on recurrence values (default: False)
-
   --polymDb POLYMDB     Databases used for polymorphisms detection (comma
                         separated) (default: gnomad)
   --cancerDb CANCERDB   Databases used for cancer hotspot annotation (comma
                         separated) (default: cosmic)
-
-  --sample SAMPLE       Specify the sample ID to focus on (default: None)
+  --verbose             Active verbose mode (default: False)
   --debug               Export original VCF with TMB_FILTER tag (default:
                         False)
   --export              Export a VCF with the considered variants (default:
                         False)
-  --verbose             Active verbose mode (default: False)
   --version             Version number
-```
 
+```
 ## Configs
 
 Working with vcf files is usually not straighforward, and mainly depends on the variant caller and annotation tools/databases used.
@@ -153,7 +148,7 @@ The same is true for the `--cancerDb` parameter.
 Input file (.vcf, .vcf.gz, .bcf)
 
 #### `--sample`
-Specify the sample ID to focus on, useful when dealing with multisample vcfs
+Specify the sample ID to focus on, required when dealing with multisample vcfs
 
 #### `--bed` and `--effGenomeSize`
 Specify either a sorted BED file with no header, or the size of the effective genome size to take in count.
@@ -165,7 +160,7 @@ Filter variants with Allelic Ratio < minVAF. Note the field used to get the Alle
 In this case, the programm will first look for this information in the **FORMAT** field, and then in the **INFO** field.
 
 #### `--maf MAXMAF`
-Filter variants with MAF < maf. Note the databases used to check the Min Allele Frequency are set using the `--polymDb`
+Filter variants with MAF > maxMaf. Note the databases used to check the Min Allele Frequency are set using the `--polymDb`
 parameters and the *config/databases.yml* file.
 
 #### `--minDepth MINDEPTH`
@@ -202,7 +197,7 @@ So far, all variants with a 'cancer' annotation (for instance with a COSMIC Id) 
 
 #### `--filterPolym`
 Filter polymorphism variants from genome databases. The databases to considered can be listed with the `--polymDb` parameter.
-The fields to scan for each database are defined in the *config/databases.yml* file and the population frequency is compared with the `--minMAF` field.
+The fields to scan for each database are defined in the *config/databases.yml* file and the population frequency is compared with the `--maf` field.
 
 #### `--filterRecurrence`
 Filter on recurrence values (for instance, intra-run occurence). In this case, the vcf file must contains the recurrence information
@@ -310,7 +305,7 @@ Let's calculated the TMB on a gene panel vcf file (coding size = 1.59Mb, caller 
 - minDepth at 100X
 - non-synonymous
 - coding and splice
-- non polymorphism variants using 1K, gnomAD databases and a MAF of 0.001
+- non polymorphism variants using 1K, gnomAD databases and a MAF of 0.001 (0.1%)
 
 In this case, a typical usage would be :
 
@@ -318,7 +313,7 @@ In this case, a typical usage would be :
 python pyTMB.py -i ${VCF} --effGenomeSize 1590000 \
 --dbConfig config/annovar.yml \
 --varConfig config/varscan.yml \
---minMAF 0.001 --minDepth 100 --minAltDepth 2\
+--maf 0.001 --minDepth 100 --minAltDepth 2\
 --filterLowQual \
 --filterNonCoding \
 --filterSplice \
