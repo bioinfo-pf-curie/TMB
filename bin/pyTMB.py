@@ -420,14 +420,14 @@ if __name__ == "__main__":
             fval = getTag(variant, callerFlags['freq'])
             freqs_vaf.append(float(fval))
 
-            if fval is not None and len(fval[fval <= args.vaf]) == len(variant.ALT):
+            if fval is not None and len(fval[fval < args.vaf]) == len(variant.ALT):
                 debugInfo = ",".join([debugInfo, "VAF"])
                 if not args.debug:
                     continue
 
             # Sequencing Depth
             dval = getTag(variant, callerFlags['depth'])
-            if dval is not None and len(dval[dval <= args.minDepth]) == len(variant.ALT):
+            if dval is not None and len(dval[dval < args.minDepth]) == len(variant.ALT):
                 debugInfo = ",".join([debugInfo, "DEPTH"])
                 if not args.debug:
                     continue
@@ -438,7 +438,7 @@ if __name__ == "__main__":
             if len(ad) == (len(variant.ALT) + 1):
                 ad = ad[1:]
 
-            if ad is not None and len(ad[ad <= args.minAltDepth]) == len(variant.ALT):
+            if ad is not None and len(ad[ad < args.minAltDepth]) == len(variant.ALT):
                 debugInfo = ",".join([debugInfo, "ALTDEPTH"])
                 if not args.debug:
                     continue
