@@ -13,21 +13,29 @@ Currently, the main limitation of TMB calculation is the lack of standard for it
 
 ## Tool summary
 
-### Requirements
+### Installation with recipe
 
 The tool was implemented in `python3`, and require the librairies `cyvcf2` and `yaml`.  
 We provide a `conda` file to build a simple python environment.  
 To do so, simply use:
 
 ```
-conda env create -f environment.yml -p PATH_TO_INSTALL
+conda env create -f environment.yml
+```
+
+### Installation with conda
+
+If you are using conda as described above, you can install pyTMB from the `bioconda` channel as follows:
+
+```
+conda install -c bioconda -c conda-forge tmb=1.3.0
 ```
 
 ### Recommendations
 
 In order to have homogenous VCF entry files and to avoid VCF ambiguities, we recommend to normalize the VCF files before calculating the TMB. This is especially useful if the VCF file contains Multi Nucleotide Variants (MNVs) or multiallelic variants.
 
-For that we suggest to use 
+For that we suggest to use
 
 ```
 bcftools norm -f FASTA -m- -o file_norm.vcf file
