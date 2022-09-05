@@ -20,7 +20,8 @@ We provide a `conda` file to build a simple python environment.
 To do so, simply use:
 
 ```
-conda env create -f environment.yml
+conda env create -n pytmb -f environment.yml
+conda activate pytmb
 ```
 
 ### Installation with conda
@@ -28,6 +29,8 @@ conda env create -f environment.yml
 If you are using conda as described above, you can install pyTMB from the `bioconda` channel as follows:
 
 ```
+conda env create -n pytmb
+conda activate pytmb
 conda install -c bioconda -c conda-forge tmb=1.3.0
 ```
 
