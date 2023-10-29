@@ -48,7 +48,7 @@ def argsParse():
     #Filters
     parser.add_argument("--mosdepth", help="enable mosdepth processing, require .bam file", action="store_true")
     parser.add_argument("--minCoverage", help="minimum coverage of the region", type=int, default=0)
-    parser.add_argument("--minMapq", help="minimum coverage of the region", type=int, default=0)
+    parser.add_argument("--minMapq", help="minimum mapping quality of the region", type=int, default=0)
     parser.add_argument("--filterNonCoding", help="Filter regions associated with non coding annotations", action="store_true")
     parser.add_argument("--filterCoding", help="Filter regions associated with coding annotations", action="store_true")
     parser.add_argument("--featureTypes", help="List of Features (exon, gene, transcript, UTR, CDS) to keep (3rd column from gtf/gff). Required with --filterCoding argument ", nargs='+', default=[])
