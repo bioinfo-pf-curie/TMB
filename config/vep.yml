@@ -1,0 +1,91 @@
+## Describe the fields
+## For definition, provide the expected key:values
+## Note that several keys/values can be defined
+
+###############################################
+
+#################################################
+## VEP
+
+## Tags
+tag: ''
+sep: '|'
+
+## Annotation flags
+isCoding:
+  Consequence:
+    - coding_sequence_variant
+    - inframe_deletion 
+    - inframe_insertion
+    - frameshift_variant
+    - incomplete_terminal_codon_variant
+    - missense_variant
+    - splice_acceptor_variant
+    - splice_donor_variant
+    - splice_region_variant
+    - start_lost  
+    - start_retained_variant
+    - stop_retained_variant
+    - stop_lost
+    - stop_gained
+    - synonymous_variant
+    - transcript_ablation
+    - transcript_amplification
+    - coding_transcript_variant
+    - protein_altering_variant
+
+isNonCoding:
+  Consequence:
+    - 5_prime_UTR_variant
+    - 3_prime_UTR_variant
+    - intergenic_variant
+    - intron_variant
+    - downstream_gene_variant
+    - feature_elongation
+    - feature_truncation
+    - mature_miRNA_variant
+    - non_coding_transcript_exon_variant
+    - NMD_transcript_variant
+    - non_coding_transcript_exon_variant
+    - non_coding_transcript_variant
+    - regulatory_region_ablation
+    - regulatory_region_amplification
+    - regulatory_region_variant
+    - TFBS_ablation
+    - TFBS_amplification
+    - TF_binding_site_variant
+    - upstream_gene_variant
+
+
+isSplicing:
+  Consequence:
+    - splice_acceptor_variant
+    - splice_donor_variant
+    - splice_region_variant
+
+
+isSynonymous:
+  Consequence:
+    - synonymous_variant
+    - start_retained_variant
+    - stop_retained_variant
+
+
+isNonSynonymous:
+  Consequence:
+    - frameshift_variant
+    - missense_variant
+    - splice_acceptor_variant
+    - splice_donor_variant
+    - splice_region_variant
+    - stop_gained
+    - stop_lost
+    - start_lost
+
+
+## Databases
+
+polymDb:
+  gnomad:
+    - gnomAD_AF
+
