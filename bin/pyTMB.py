@@ -640,7 +640,7 @@ if __name__ == "__main__":
     print("filterSplice=", args.filterSplice)
     print("filterSyn=", args.filterSyn)
     print("filterNonSyn=", args.filterNonSyn)
-    print("filterConcerHostpot=", args.filterCancerHotspot)
+    print("filterCancerHotspot=", args.filterCancerHotspot)
     print("filterPolym=", args.filterPolym)
     print("")
     print("Total number of variants=", varCounter)
