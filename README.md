@@ -2,7 +2,7 @@
 
 **Institut Curie - TMB analysis**
 
-[![Install with](https://anaconda.org/anaconda/conda-build/badges/installer/conda.svg)](https://conda.anaconda.org/anaconda)
+[![Install with conda](https://img.shields.io/badge/install%20with-conda-brightgreen.svg)](https://conda.anaconda.org/anaconda)
 
 
 This tool was designed to calculate a **Tumor Mutational Burden (TMB)** score from a VCF file.
@@ -354,6 +354,9 @@ python pyTMB.py -i ${VCF} --effGenomeSize 33280000 \
 ### Credits
 
 This pipeline has been written by the bioinformatics core facility in close collaboration with the Clinical Bioinformatics and the Genetics Service of the Institut Curie. Many thanks to the seqOIA-IT team for their help in the development and for the extensive testing of the tool !
+
+If you are using this tool for your own research, please cite ;  
+Dupain, C., Gutman, T., Girard, E. et al. *Tumor mutational burden assessment and standardized bioinformatics approach using custom NGS panels in clinical routine.* BMC Biol 22, 43 (2024). https://doi.org/10.1186/s12915-024-01839-8
 
 ### Contacts
 
