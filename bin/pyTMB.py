@@ -239,7 +239,7 @@ Parse inputs
 def argsParse():
 
     parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-    parser.add_argument("-i", "--vcf", required=True, help="Input file (.vcf, .vcf.gz, .bcf)")
+    parser.add_argument("-i", "--vcf", required=True, help="Input file (.vcf, .vcf.gz, .bcf, .bcf.gz)")
 
     # Configs
     parser.add_argument("--dbConfig", required=True, help="Databases config file", type=str)
