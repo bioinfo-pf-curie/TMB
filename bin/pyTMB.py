@@ -77,27 +77,39 @@ def getMultiAlleleHeader(vcf):
 Calculate Effective Genome Size from a BED file
 """
 
+import sys
+
 def getEffGenomeSizeFromBed(infile, verbose=False):
-
     if verbose:
-        print("## Loading BED file '", infile, "'...")
+        print(f"## Loading BED file '{infile}'...")
 
-    bedhandle = open(infile)
     effgs = 0
     nline = 0
-    for line in bedhandle:
-        bedtab = line.strip().split("\t")
-        nline += 1
-        try:
-            chromosome, start, end = bedtab[:3]
-        except ValueError:
-            sys.stderr.write("Error : wrong input format in line", nline, ". Not a BED file !? \n")
-            sys.exit(-1)
 
-        intl = abs(int(end) - int(start))
-        effgs += intl
+    try:
+        with open(infile) as bedhandle:
+            for line in bedhandle:
+                nline += 1
+                if line.startswith("#") or line.strip() == "":
+                    continue  # skip comments or empty lines
 
-    bedhandle.close()
+                bedtab = line.strip().split("\t")
+                if len(bedtab) < 3:
+                    sys.stderr.write(f"Error: wrong input format in line {nline}. Not a BED file?\n")
+                    sys.exit(-1)
+
+                try:
+                    start = int(bedtab[1])
+                    end = int(bedtab[2])
+                except ValueError:
+                    sys.stderr.write(f"Error: non-integer coordinates in line {nline}.\n")
+                    sys.exit(-1)
+
+                effgs += abs(end - start)
+    except FileNotFoundError:
+        sys.stderr.write(f"Error: file '{infile}' not found.\n")
+        sys.exit(-1)
+
     return effgs
 
 """
