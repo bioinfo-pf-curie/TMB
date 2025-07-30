@@ -3,17 +3,24 @@ version-1.5.0
 
 NEW FEATURES
 
-   - Add Strelka config file
+   - Add Strelka and VEP config file #20,#27
 
 SIGNIFICANT USER CHANGES
-   - Fix default values in `--vaf`, `--maf`, `--minDepth`, `--minAltDepth`
+
+   - Fix default values in `--vaf`, `--maf`, `--minDepth`, `--minAltDepth` #31
+   - vaf, maf, minDepth and minAltDepth are now strictly defined
+   - Update help message #28
+
+BUG FIXES
+
+   - filterLowQual is not only based on the FILTER column. Only PASS variants are reported #21
 
 *************************************
 version-1.4.0
 
 SIGNIFICANT USER CHANGES
 
-   - Add check for maf and vaf values
+   - Add check for vaf range values
    - Add input file and sample name info in output
 
 *************************************

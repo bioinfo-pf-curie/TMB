@@ -263,10 +263,10 @@ def argsParse():
     parser.add_argument("--bed", help="Capture design to use if effGenomeSize is not defined (BED file)", default=None)
 
     # Thresholds
-    parser.add_argument("--vaf", help="Filter variants with Allelic Ratio <= vaf", type=float, default=0)
+    parser.add_argument("--vaf", help="Filter variants with Allelic Ratio < vaf", type=float, default=0)
     parser.add_argument("--maf", help="Filter variants with MAF > maf", type=float, default=1)
     parser.add_argument("--minDepth", help="Filter variants with depth < minDepth", type=int, default=1)
-    parser.add_argument("--minAltDepth", help="Filter variants with alternative allele depth <= minAltDepth", type=int, default=1)
+    parser.add_argument("--minAltDepth", help="Filter variants with alternative allele depth < minAltDepth", type=int, default=1)
 
     # Which variants to use
     parser.add_argument("--filterLowQual", help="Filter low quality (i.e not PASS) variant", action="store_true")
@@ -391,7 +391,7 @@ if __name__ == "__main__":
                     continue
 
             # Variant has a QUAL value or not PASS in the FILTER column
-            if args.filterLowQual and (variant.QUAL is not None or variant.FILTER is not None):
+            if args.filterLowQual and variant.FILTER is not None:
                 debugInfo = ",".join([debugInfo, "QUAL"])
                 if not args.debug:
                     continue

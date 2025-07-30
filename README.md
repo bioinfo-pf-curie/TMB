@@ -12,27 +12,35 @@ Currently, the main limitation of TMB calculation is the lack of standard for it
 
 ## Tool summary
 
-### Installation with conda
+### Installation with recipe
 
 The tool was implemented in `python3`, and require the librairies `cyvcf2` and `yaml`.  
-We provide a `yml` file to build a simple python environment as follow :
+We provide a `conda` file to build a simple python environment.  
+To do so, simply use:
 
 ```
-conda env create -f environment.yml
+conda env create -n pytmb -f environment.yml
+conda activate pytmb
 ```
 
-You can also directly install `pyTMB` from the `bioconda` channel as follows:
+### Installation with conda
+
+If you are using conda as described above, you can install pyTMB from the `bioconda` channel as follows:
 
 ```
-conda install -c bioconda -c conda-forge -n pytmb tmb=1.3.0
+conda env create -n pytmb
+conda activate pytmb
+conda install -c bioconda -c conda-forge tmb=1.3.0
 ```
 
-### VCF format
+### Recommendations
 
-In order to have homogenous VCF entry files and to avoid VCF ambiguities, we recommend to normalize the VCF files before calculating the TMB. This is especially useful if the VCF file contains multiallelic variants.
+In order to have homogenous VCF entry files and to avoid VCF ambiguities, we recommend to normalize the VCF files before calculating the TMB. This is especially useful if the VCF file contains Multi Nucleotide Variants (MNVs) or multiallelic variants.
+
+For that we suggest to use
 
 ```
-bcftools norm -m -f FASTA -o ${PREFIX}_norm.vcf ${PREFIX}.vcf 
+bcftools norm -f FASTA -m- -o file_norm.vcf file
 ```
 
 ### Implementation
@@ -68,15 +76,12 @@ optional arguments:
                         Effective genome size (default: None)
   --bed BED             Capture design to use if effGenomeSize is not defined
                         (BED file) (default: None)
-  --vaf VAF             Filter variants with Allelic Ratio <= vaf (default:
-                        None)
-  --maf MAF             Filter variants with MAF > maf (default: None)
-  --minDepth MINDEPTH   Filter variants with depth < minDepth (default: None)
+  --vaf VAF             Filter variants with Allelic Ratio <= vaf (default:0)
+  --maf MAF             Filter variants with MAF > maf (default:1)
+  --minDepth MINDEPTH   Filter variants with depth < minDepth (default:1)
   --minAltDepth MINALTDEPTH
-                        Filter variants with alternative allele depth <=
-                        minAltDepth (default: None)
-  --filterLowQual       Filter low quality (i.e not PASS) variant (default:
-                        False)
+                        Filter variants with alternative allele depth <=minAltDepth (default:1)
+  --filterLowQual       Filter low quality (i.e not PASS) variant (default:False)
   --filterIndels        Filter insertions/deletions (default: False)
   --filterCoding        Filter Coding variants (default: False)
   --filterSplice        Filter Splice variants (default: False)
@@ -84,20 +89,15 @@ optional arguments:
   --filterSyn           Filter Synonymous variants (default: False)
   --filterNonSyn        Filter Non-Synonymous variants (default: False)
   --filterCancerHotspot
-                        Filter variants annotated as cancer hotspots (default:
-                        False)
+                        Filter variants annotated as cancer hotspots (default: False)
   --filterPolym         Filter polymorphism variants in genome databases. See
                         --maf (default: False)
   --filterRecurrence    Filter on recurrence values (default: False)
-  --polymDb POLYMDB     Databases used for polymorphisms detection (comma
-                        separated) (default: gnomad)
-  --cancerDb CANCERDB   Databases used for cancer hotspot annotation (comma
-                        separated) (default: cosmic)
+  --polymDb POLYMDB     Databases used for polymorphisms detection (comma separated) (default: gnomad)
+  --cancerDb CANCERDB   Databases used for cancer hotspot annotation (comma separated) (default: cosmic)
   --verbose             Active verbose mode (default: False)
-  --debug               Export original VCF with TMB_FILTER tag (default:
-                        False)
-  --export              Export a VCF with the considered variants (default:
-                        False)
+  --debug               Export original VCF with TMB_FILTER tag (default: False)
+  --export              Export a VCF with the considered variants (default: False)
   --version             Version number
 
 ```
