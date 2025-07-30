@@ -358,8 +358,6 @@ if __name__ == "__main__":
     varCounter = 0
     varNI = 0
     varTMB = 0
-    freqs_vaf = []
-    freqs_maf = []
     for variant in vcf:
         varCounter += 1
         if (varCounter % 1000 == 0 and args.verbose):
@@ -402,8 +400,6 @@ if __name__ == "__main__":
 
             # Variant Allele Frequency
             fval = getTag(variant, callerFlags['freq'])
-            freqs_vaf.append(float(fval))
-
             if fval is not None and len(fval[fval < args.vaf]) == len(variant.ALT):
                 debugInfo = ",".join([debugInfo, "VAF"])
                 if not args.debug:
@@ -417,8 +413,8 @@ if __name__ == "__main__":
                     continue
 
             # Alternative allele Depth
-            ad = getTag(variant, callerFlags['altDepth'])
-            # case where AD = REF + ALTs
+            ad = getTag(variant, callerFlags['altDepth']).flatten()           
+            # If AD = REF + ALTs, remove the first (REF) value
             if len(ad) == (len(variant.ALT) + 1):
                 ad = ad[1:]
 
