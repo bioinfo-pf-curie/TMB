@@ -2,7 +2,7 @@
 
 **Institut Curie - TMB analysis**
 
-[![Install with conda](https://img.shields.io/badge/install%20with-conda-brightgreen.svg)](https://conda.anaconda.org/anaconda)
+[![run with conda](http://img.shields.io/badge/run%20with-conda-3EB049?labelColor=000000&logo=anaconda)](https://docs.conda.io/en/latest/)
 
 
 This tool was designed to calculate a **Tumor Mutational Burden (TMB)** score from a VCF file.
@@ -31,7 +31,7 @@ If you are using conda as described above, you can install pyTMB from the `bioco
 ```
 conda env create -n pytmb
 conda activate pytmb
-conda install -c bioconda -c conda-forge tmb=1.3.0
+conda install -c bioconda -c conda-forge tmb=1.5.0
 ```
 
 ### Recommendations
@@ -48,8 +48,14 @@ bcftools norm -f FASTA -m- -o file_norm.vcf file
 
 The idea behind this script is quite simple. All variants are scanned and filtered according to the criteria provided by the user. If a variant passes all the filters, it is therefore used for the TMB calculation. In other words, if no filters are provided, the script will simply count the number of variants.
 
-The TMB is defined as the number of variants over the size of the genomic region (in Mb). In order to calculate the size of the genome (ie. the `effectiveGenomeSize`), the user can provide a BED file (`--bed`) with the design of the assay. This BED file should be ordered, 0 based and with no header. Another alternative is to specify the size of genomic regions using `--effGenomeSize`.  Importantly, **this is the user responsability to provide the BED corresponding to the experiments.**
-In addition, we provide the `pyEffGenomicSize.py` script to calculate this genome effective size from a BED file according to a few criterias such as annotations, coverage and mapping quality thresholds defined by the user (script in `bin/pyEffGenomeSize.py`).
+The TMB is defined as the number of variants over the size of the genomic region (in Mb).  
+To calculate the size of the genome (ie. the `effectiveGenomeSize`), the user can provide a BED file (`--bed`) with the design of the assay.  
+This BED file should be ordered, 0 based and with no header.  
+Another alternative is to specify the size of genomic regions using `--effGenomeSize`.  
+Importantly, **this is the user responsability to provide the BED corresponding to the vcf input file.**  
+
+Of note, we also provide the `pyEffGenomicSize.py` script to calculate the effective size from a BAM file using  annotations, coverage and mapping quality thresholds defined by the user. This script is under development and was not yet validated ! Run it with caution.
+
 
 ## Quick help
 
@@ -77,15 +83,12 @@ optional arguments:
                         Effective genome size (default: None)
   --bed BED             Capture design to use if effGenomeSize is not defined
                         (BED file) (default: None)
-  --vaf VAF             Filter variants with Allelic Ratio <= vaf (default:
-                        None)
-  --maf MAF             Filter variants with MAF > maf (default: None)
-  --minDepth MINDEPTH   Filter variants with depth < minDepth (default: None)
+  --vaf VAF             Filter variants with Allelic Ratio <= vaf (default:0)
+  --maf MAF             Filter variants with MAF > maf (default:1)
+  --minDepth MINDEPTH   Filter variants with depth < minDepth (default:1)
   --minAltDepth MINALTDEPTH
-                        Filter variants with alternative allele depth <=
-                        minAltDepth (default: None)
-  --filterLowQual       Filter low quality (i.e not PASS) variant (default:
-                        False)
+                        Filter variants with alternative allele depth <=minAltDepth (default:1)
+  --filterLowQual       Filter low quality (i.e not PASS) variant (default:False)
   --filterIndels        Filter insertions/deletions (default: False)
   --filterCoding        Filter Coding variants (default: False)
   --filterSplice        Filter Splice variants (default: False)
@@ -93,20 +96,15 @@ optional arguments:
   --filterSyn           Filter Synonymous variants (default: False)
   --filterNonSyn        Filter Non-Synonymous variants (default: False)
   --filterCancerHotspot
-                        Filter variants annotated as cancer hotspots (default:
-                        False)
+                        Filter variants annotated as cancer hotspots (default: False)
   --filterPolym         Filter polymorphism variants in genome databases. See
                         --maf (default: False)
   --filterRecurrence    Filter on recurrence values (default: False)
-  --polymDb POLYMDB     Databases used for polymorphisms detection (comma
-                        separated) (default: gnomad)
-  --cancerDb CANCERDB   Databases used for cancer hotspot annotation (comma
-                        separated) (default: cosmic)
+  --polymDb POLYMDB     Databases used for polymorphisms detection (comma separated) (default: gnomad)
+  --cancerDb CANCERDB   Databases used for cancer hotspot annotation (comma separated) (default: cosmic)
   --verbose             Active verbose mode (default: False)
-  --debug               Export original VCF with TMB_FILTER tag (default:
-                        False)
-  --export              Export a VCF with the considered variants (default:
-                        False)
+  --debug               Export original VCF with TMB_FILTER tag (default: False)
+  --export              Export a VCF with the considered variants (default: False)
   --version             Version number
 
 ```
@@ -228,7 +226,7 @@ The option allows to export a vcf file with the tag **TMB_FILTERS** in the **INF
 
 ## `pyEffGenomeSize.py`:
 
-This tool is designed to calculate the effective genome size from a BED file. This effective size is an important parameter of TMB calculation which can have a strong impact on the results. For instance, if only coding variants are used, it would make sense to use only the genomic size of coding region for the TMB calculation. So far, **this is the user responsability to provide an intial BED file with corresponding genomic features.** and to specify it to the `pyEffGenomeSize.py` script or directly to the `--bed` parameter. The user can also provide the size of the BED with the `--effGenomeSize` parameter.
+This tool is designed to calculate the effective genome size from a BAM file. This effective size is an important parameter of TMB calculation which can have a strong impact on the results. For instance, if only coding variants are used, it would make sense to use only the genomic size of coding region for the TMB calculation. So far, **this is the user responsability to provide an intial BED file with corresponding genomic features.** and to specify it to the `pyEffGenomeSize.py` script or directly to the `--bed` parameter. The user can also provide the size of the BED with the `--effGenomeSize` parameter.
 
 
 

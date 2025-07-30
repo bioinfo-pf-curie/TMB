@@ -3,7 +3,7 @@
 #
 #  This file is part of pyTMB software.
 #
-#  Copyright (c) 2020 - Institut Curie
+#  Copyright (c) 2020 - 2025 - Institut Curie
 #
 #  File author(s):
 #      Tom Gutman <tom.gutman@curie.fr>,
@@ -14,7 +14,7 @@
 #
 ##############################################################################
 
-__version__ = '1.4.0'
+__version__ = '1.5.0'
 
 """
 This script is designed to calculate a TMB score from a VCF file.
@@ -77,27 +77,39 @@ def getMultiAlleleHeader(vcf):
 Calculate Effective Genome Size from a BED file
 """
 
+import sys
+
 def getEffGenomeSizeFromBed(infile, verbose=False):
-
     if verbose:
-        print("## Loading BED file '", infile, "'...")
+        print(f"## Loading BED file '{infile}'...")
 
-    bedhandle = open(infile)
     effgs = 0
     nline = 0
-    for line in bedhandle:
-        bedtab = line.strip().split("\t")
-        nline += 1
-        try:
-            chromosome, start, end = bedtab[:3]
-        except ValueError:
-            sys.stderr.write("Error : wrong input format in line", nline, ". Not a BED file !? \n")
-            sys.exit(-1)
 
-        intl = abs(int(end) - int(start))
-        effgs += intl
+    try:
+        with open(infile) as bedhandle:
+            for line in bedhandle:
+                nline += 1
+                if line.startswith("#") or line.strip() == "":
+                    continue  # skip comments or empty lines
 
-    bedhandle.close()
+                bedtab = line.strip().split("\t")
+                if len(bedtab) < 3:
+                    sys.stderr.write(f"Error: wrong input format in line {nline}. Not a BED file?\n")
+                    sys.exit(-1)
+
+                try:
+                    start = int(bedtab[1])
+                    end = int(bedtab[2])
+                except ValueError:
+                    sys.stderr.write(f"Error: non-integer coordinates in line {nline}.\n")
+                    sys.exit(-1)
+
+                effgs += abs(end - start)
+    except FileNotFoundError:
+        sys.stderr.write(f"Error: file '{infile}' not found.\n")
+        sys.exit(-1)
+
     return effgs
 
 """
@@ -218,15 +230,10 @@ def getTag(v, tag):
     # First check in FORMAT field
     if tag in variant.FORMAT:
         val = variant.format(tag)
-        # if np.shape(val) == (1, 1) and val < 0:
-        #        val = None
 
     # Otherwise, check in INFO field
     if tag not in variant.FORMAT or val is None:
         val = variant.INFO.get(tag)
-
-    # if np.shape(val) == (1, 1) and val is not None:
-    #    val = float(val)
 
     if type(val) != np.ndarray:
         val = np.array([val], float)
@@ -244,10 +251,10 @@ Parse inputs
 def argsParse():
 
     parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-    parser.add_argument("-i", "--vcf", required=True, help="Input file (.vcf, .vcf.gz, .bcf)")
+    parser.add_argument("-i", "--vcf", required=True, help="Input file (.vcf, .vcf.gz, .bcf, .bcf.gz)")
 
     # Configs
-    parser.add_argument("--dbConfig", help="Databases config file", type=str, required=True)
+    parser.add_argument("--dbConfig", required=True, help="Databases config file", type=str)
     parser.add_argument("--varConfig", required=True, help="Variant calling config file", type=str)
     parser.add_argument("--sample", help="Specify the sample ID to focus on", type=str, default=None)
 
@@ -256,10 +263,10 @@ def argsParse():
     parser.add_argument("--bed", help="Capture design to use if effGenomeSize is not defined (BED file)", default=None)
 
     # Thresholds
-    parser.add_argument("--vaf", help="Filter variants with Allelic Ratio <= vaf", type=float)
-    parser.add_argument("--maf", help="Filter variants with MAF > maf", type=float)
-    parser.add_argument("--minDepth", help="Filter variants with depth < minDepth", type=int)
-    parser.add_argument("--minAltDepth", help="Filter variants with alternative allele depth <= minAltDepth", type=int)
+    parser.add_argument("--vaf", help="Filter variants with Allelic Ratio < vaf", type=float, default=0)
+    parser.add_argument("--maf", help="Filter variants with MAF > maf", type=float, default=1)
+    parser.add_argument("--minDepth", help="Filter variants with depth < minDepth", type=int, default=1)
+    parser.add_argument("--minAltDepth", help="Filter variants with alternative allele depth < minAltDepth", type=int, default=1)
 
     # Which variants to use
     parser.add_argument("--filterLowQual", help="Filter low quality (i.e not PASS) variant", action="store_true")
@@ -314,68 +321,43 @@ if __name__ == "__main__":
     # Outputs
     if args.export:
         wx = cyvcf2.Writer(re.sub(r'\.vcf$|\.vcf.gz$|\.bcf',
-                                  '_export.vcf', os.path.basename(args.vcf)), vcf)
+                                  '_export.vcf.gz', os.path.basename(args.vcf)), vcf, mode="wz")
     if args.debug:
         vcf.add_info_to_header({'ID': 'TMB_FILTERS', 'Description': 'Detected filters for TMB calculation',
                                 'Type': 'Character', 'Number': '1'})
         wd = cyvcf2.Writer(re.sub(r'\.vcf$|\.vcf.gz$|\.bcf',
-                                  '_debug.vcf', os.path.basename(args.vcf)), vcf)
+                                  '_debug.vcf.gz', os.path.basename(args.vcf)), vcf, mode="wz")
 
     # Load config
     dbFlags = loadConfig(args.dbConfig)
     callerFlags = loadConfig(args.varConfig)
 
+    ## Check parameters
     # Genome size
     if args.effGenomeSize is None:
         if args.bed is not None:
             effGS = getEffGenomeSizeFromBed(args.bed)
         else:
-            sys.stderr.write(
-                "Error: Effective Genome Size not specified. See --effGenomeSize or --bed \n")
+            sys.stderr.write("Error: Effective Genome Size not specified. See --effGenomeSize or --bed \n")
             sys.exit(-1)
     else:
         effGS = args.effGenomeSize
 
-    # Warning Vaf:
+    # VAF
     if args.vaf > int(callerFlags['maxVaf']):
-        print("Error: vaf treshold > vaf in configuration.")
-        print(args.vaf)
-        print(callerFlags['maxVaf'])
+        sys.stderr.write("Error: vaf > maxVaf threshold. Check the configuration file.")
         sys.exit(-1)
 
     # Warning filterPolym & MAF:
     if args.polymDb and not args.filterPolym:
-        print("Warning: --filterPolym argument not provided !")
+        print("Warning: --filterPolym argument not provided while --polymDb is specified !")
     if args.polymDb and args.filterPolym and not args.maf:
         print("Error: --maf argument not provided !")
         sys.exit(-1)
 
-
-
-    # Warning no Db COnfing if --filterSyn or --filterSPlice --filterCoding --filterNoncoding # OK
-
-    # if polyMDB il faut aussi la maf et filterpolym: check si les 3 sont présents # OK
-
-    # check pour --polymDB est présent dans le fichier VCF sinon warning # TO Continue ! # Je n'ai pas réussi, cf lignes 540...
-
-    # output: lister le nombre de variants filtrés par la maf
-
-    # ajout warning si absence de --var>Config et Dbconfig OK
-
-    # Généralisé la recurrence pour en faire un champs custom avec 2 paramètres soit numéric soit string pour filtrer et à ajouter dans un fichier de config 
-
-    # Ajouter maxMaf dans le fichier config annotation ?
-
-    # rebosser la documentation et proposer valeurs par défaut
-
-    # homogénéiser les paramètre maxVaf et maxMaf soit dans les config files soit en ligne de commande
-
     varCounter = 0
     varNI = 0
     varTMB = 0
-    freqs_vaf = []
-    freqs_maf = []
-    freqs_maf_2 = []
     for variant in vcf:
         varCounter += 1
         if (varCounter % 1000 == 0 and args.verbose):
@@ -407,7 +389,7 @@ if __name__ == "__main__":
                     continue
 
             # Variant has a QUAL value or not PASS in the FILTER column
-            if args.filterLowQual and (variant.QUAL is not None or variant.FILTER is not None):
+            if args.filterLowQual and variant.FILTER is not None:
                 debugInfo = ",".join([debugInfo, "QUAL"])
                 if not args.debug:
                     continue
@@ -418,8 +400,6 @@ if __name__ == "__main__":
 
             # Variant Allele Frequency
             fval = getTag(variant, callerFlags['freq'])
-            freqs_vaf.append(float(fval))
-
             if fval is not None and len(fval[fval < args.vaf]) == len(variant.ALT):
                 debugInfo = ",".join([debugInfo, "VAF"])
                 if not args.debug:
@@ -433,8 +413,8 @@ if __name__ == "__main__":
                     continue
 
             # Alternative allele Depth
-            ad = getTag(variant, callerFlags['altDepth'])
-            # case where AD = REF + ALTs
+            ad = getTag(variant, callerFlags['altDepth']).flatten()           
+            # If AD = REF + ALTs, remove the first (REF) value
             if len(ad) == (len(variant.ALT) + 1):
                 ad = ad[1:]
 
@@ -501,7 +481,6 @@ if __name__ == "__main__":
                 for db in args.polymDb.split(','):
                     for x in dbFlags['polymDb'][db]:
                         fdb.append(x)
-                freqs_maf_2 = getMaf(variant, infos=dbInfo, flags=fdb, val=args.maf, maf_list=freqs_maf)
 
                 if isPolym(variant, infos=dbInfo, flags=fdb, val=args.maf):
                     debugInfo = ",".join([debugInfo, "POLYM"])
@@ -529,79 +508,6 @@ if __name__ == "__main__":
         if args.debug:
             variant.INFO["TMB_FILTERS"] = re.sub(r'^,', '', debugInfo)
             wd.write_record(variant)
-
-    #test VAF argument:
-    if 1 < args.vaf <= 100 and 0 <= min(freqs_vaf) <= 1 and 0 <= max(freqs_vaf) <= 1:
-        sys.stderr.write("Warning : given vaf >> vaf in config. wrong vaf threshold ?\n")
-        #sys.exit()
-
-    elif 0 <= args.vaf <= 1 and 0 <= min(freqs_vaf) <= 100 and max(freqs_vaf) > 1:
-        sys.stderr.write("Warning : given vaf << vaf in config. Wrong vaf threshold ?\n")
-        #sys.exit()
-
-    # test used DB for polym:
-    # a optimiser
-    if args.polymDb and args.filterPolym:
-        #print("args:",args.polymDb)
-        polymDbFields = []
-        #print("annotInfo:",annotInfo)
-        for db in args.polymDb.split(','):
-            #print("db:",db)
-            #print("polymDb:",dbFlags['polymDb'])
-            #if dbFlags in dbFlags['polymDb'][db]:
-            for db_id in dbFlags['polymDb'][db]:
-                polymDbFields.append(db_id)
-                #print("dbflags:",dbFlags, type(dbFlags))
-                #print(type(dbFlags['polymDb'][db_id]))
-        #print("Fileds:",polymDbFields)
-        for fields in polymDbFields:
-            info=dict(variant.INFO)
-            #print(dbInfo)
-            #print(vcf.infos)
-            #print("fileds:", fields)
-            for key,value in info.items():
-                if key.startswith(fields):
-                    continue
-                    #print(key,value)
-            #re.search(fields,info)
-            #print(info)
-            #if fields not in annot
-
-            # for key, value in my_dict.iteritems():   # iter on both keys and values
-            #     if key.startswith('seller_account'):
-            #         print key, value
-
-        #     if INFO is not None:
-        # annotTag = INFO.split(',')
-        # annotInfo = []
-        # for i in range(0, len(annotTag)):
-        #     annot = annotTag[i].split('|')
-        #     dictannot = {i: annot[i] for i in range(0, len(annot))}
-        #     annotInfo.append(dictannot)
-        # return(annotInfo)
-            #print(isAnnotatedAs(variant, infos=annotInfo, flags=dbFlags['isCoding'], sep=dbFlags['sep']))
-            #print("dbFlags:",dbFlags['polymDb'][db])
-                #print("var.info.get(db):",variant.INFO.get(dbFlags))
-
-    #test MAF argument and annotation:
-    # if freqs_maf_2:
-    #     if 1 < args.maf <= 100 and 0 <= min(freqs_maf_2) <= 1 and 0 <= max(freqs_maf_2) <= 1:
-    #         sys.stderr.write("Error : wrong maf threshold, maf is not in percentage and should be between 0 and 1\n")
-    #         sys.exit()
-    #
-    #     elif 0 <= args.maf <= 1 and 0 <= min(freqs_maf_2) <= 100 and max(freqs_maf_2) > 1 and args.maf != 1:
-    #         sys.stderr.write("Error : wrong maf threshold, maf is in percentage and should be between 0 and 100\n")
-    #         sys.exit()
-    #
-    #     elif args.maf == 1 and max(freqs_maf_2) > 1:
-    #         pass
-    # else:
-    #     #warnflag = str(variant.CHROM) + ":" + str(variant.start) + "-" + str(variant.end)
-    #     #warnings.warn("Warning : variant {} raises an error. Skipped so far ...".format(warnflag))
-    #     print("Warning: Annotation doesn't match config file ?")
-    #     sys.exit(-1)
-
-
 
     if args.export:
         wx.close()
