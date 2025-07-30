@@ -1,0 +1,124 @@
+pyTMB version= 1.5.0
+When= 2025-07-30
+
+Input= test2_mutect2_snpeff.vcf.gz
+Sample= None
+
+Config caller= ../../config/mutect2.yml
+Config databases= ../../config/annovar_102015.yml
+
+Filters:
+-------
+VAF= 0.05
+MAF= 0.001
+minDepth= 20
+minAltDepth= 2
+filterLowQual= True
+filterIndels= False
+filterCoding= False
+filterNonCoding= True
+filterSplice= False
+filterSyn= True
+filterNonSyn= False
+filterConcerHostpot= False
+filterPolym= True
+
+Total number of variants= 3828
+Non-informative variants= 0
+Variants after filters= 769
+Effective Genome Size= 33280000
+
+TMB= 23.11
+pyTMB version= 1.5.0
+When= 2025-07-30
+
+Input= head_vcf_seqOIA.vcf.gz
+Sample= None
+
+Config caller= ../../config/mutect2.yml
+Config databases= ../../config/annovar_102015.yml
+
+Filters:
+-------
+VAF= 0.05
+MAF= 0.001
+minDepth= 20
+minAltDepth= 2
+filterLowQual= True
+filterIndels= False
+filterCoding= False
+filterNonCoding= True
+filterSplice= False
+filterSyn= True
+filterNonSyn= False
+filterConcerHostpot= False
+filterPolym= True
+
+Total number of variants= 516
+Non-informative variants= 0
+Variants after filters= 434
+Effective Genome Size= 33280000
+
+TMB= 13.04
+pyTMB version= 1.5.0
+When= 2025-07-30
+
+Input= test1_mutect2_snpeff.vcf.gz
+Sample= None
+
+Config caller= ../../config/mutect2.yml
+Config databases= ../../config/annovar_102015.yml
+
+Filters:
+-------
+VAF= 0.05
+MAF= 0.001
+minDepth= 20
+minAltDepth= 2
+filterLowQual= True
+filterIndels= False
+filterCoding= False
+filterNonCoding= True
+filterSplice= False
+filterSyn= True
+filterNonSyn= False
+filterConcerHostpot= False
+filterPolym= True
+
+Total number of variants= 1162
+Non-informative variants= 0
+Variants after filters= 46
+Effective Genome Size= 33280000
+
+TMB= 1.38
+pyTMB version= 1.5.0
+When= 2025-07-30
+
+Input= test2_mutect2_snpeff.vcf.gz
+Sample= None
+
+Config caller= ../../config/mutect2.yml
+Config databases= ../../config/annovar_102015.yml
+
+Filters:
+-------
+VAF= 0.05
+MAF= 0.001
+minDepth= 20
+minAltDepth= 2
+filterLowQual= True
+filterIndels= False
+filterCoding= False
+filterNonCoding= True
+filterSplice= False
+filterSyn= True
+filterNonSyn= False
+filterConcerHostpot= False
+filterPolym= True
+
+Total number of variants= 3828
+Non-informative variants= 0
+Variants after filters= 769
+Effective Genome Size= 33280000
+
+TMB= 23.11
