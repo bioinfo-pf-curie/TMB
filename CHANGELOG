@@ -10,6 +10,7 @@ SIGNIFICANT USER CHANGES
    - Fix default values in `--vaf`, `--maf`, `--minDepth`, `--minAltDepth` #31
    - vaf, maf, minDepth and minAltDepth are now strictly defined
    - Update help message #28
+   - Compress output vcf files (--export / --debug)
 
 BUG FIXES
 

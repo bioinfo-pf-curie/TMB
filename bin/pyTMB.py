@@ -321,12 +321,12 @@ if __name__ == "__main__":
     # Outputs
     if args.export:
         wx = cyvcf2.Writer(re.sub(r'\.vcf$|\.vcf.gz$|\.bcf',
-                                  '_export.vcf', os.path.basename(args.vcf)), vcf)
+                                  '_export.vcf.gz', os.path.basename(args.vcf)), vcf, mode="wz")
     if args.debug:
         vcf.add_info_to_header({'ID': 'TMB_FILTERS', 'Description': 'Detected filters for TMB calculation',
                                 'Type': 'Character', 'Number': '1'})
         wd = cyvcf2.Writer(re.sub(r'\.vcf$|\.vcf.gz$|\.bcf',
-                                  '_debug.vcf', os.path.basename(args.vcf)), vcf)
+                                  '_debug.vcf.gz', os.path.basename(args.vcf)), vcf, mode="wz")
 
     # Load config
     dbFlags = loadConfig(args.dbConfig)
