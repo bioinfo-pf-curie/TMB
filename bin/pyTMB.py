@@ -228,12 +228,12 @@ Return a 2D numpy array
 def getTag(v, tag):
 
     # First check in FORMAT field
-    if tag in variant.FORMAT:
-        val = variant.format(tag)
+    if tag in v.FORMAT:
+        val = v.format(tag)
 
     # Otherwise, check in INFO field
-    if tag not in variant.FORMAT or val is None:
-        val = variant.INFO.get(tag)
+    if tag not in v.FORMAT or val is None:
+        val = v.INFO.get(tag)
 
     if type(val) != np.ndarray:
         val = np.array([val], float)
