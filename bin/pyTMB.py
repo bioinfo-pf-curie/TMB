@@ -343,6 +343,10 @@ if __name__ == "__main__":
     else:
         effGS = args.effGenomeSize
 
+    if effGS == 0:
+        sys.stderr.write("Error: Effective genome size is 0. Check BED file.\n")
+        sys.exit(-1)
+
     # VAF
     if args.vaf > int(callerFlags['maxVaf']):
         sys.stderr.write("Error: vaf > maxVaf threshold. Check the configuration file.")
