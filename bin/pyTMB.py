@@ -152,22 +152,6 @@ def isPolym(v, infos, flags, val):
     return(False)
 
 """
-Get MAF value
-"""
-
-def getMaf(v, infos, flags, val, maf_list):
-
-    subINFO = subsetINFO(infos, keys=flags)
-    for key in subINFO:
-        if type(subINFO[key]) is tuple:
-            for i in subINFO[key]:
-                if i is not None and i != ".":
-                    maf_list.append(i)
-        elif subINFO[key] is not None and subINFO[key] != "." and subINFO[key] != "NA":
-            maf_list.append(float(subINFO[key]))
-    return(maf_list)
-
-"""
 Check if a variant is annotated as a cancer hotspot
 """
 
