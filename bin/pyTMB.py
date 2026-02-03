@@ -393,6 +393,8 @@ if __name__ == "__main__":
             #######################
 
             # Variant Allele Frequency
+            # Note: For multi-allelic variants, filters out only if ALL alts fail threshold.
+            # Variant passes if ANY alt meets the VAF threshold.
             fval = getTag(variant, callerFlags['freq'])
             if fval is not None and len(fval[fval < args.vaf]) == len(variant.ALT):
                 debugInfo = ",".join([debugInfo, "VAF"])
@@ -400,6 +402,7 @@ if __name__ == "__main__":
                     continue
 
             # Sequencing Depth
+            # Note: For multi-allelic variants, filters out only if ALL alts fail threshold.
             dval = getTag(variant, callerFlags['depth'])
             if dval is not None and len(dval[dval < args.minDepth]) == len(variant.ALT):
                 debugInfo = ",".join([debugInfo, "DEPTH"])
@@ -407,7 +410,8 @@ if __name__ == "__main__":
                     continue
 
             # Alternative allele Depth
-            ad = getTag(variant, callerFlags['altDepth']).flatten()           
+            # Note: For multi-allelic variants, filters out only if ALL alts fail threshold.
+            ad = getTag(variant, callerFlags['altDepth']).flatten()
             # If AD = REF + ALTs, remove the first (REF) value
             if len(ad) == (len(variant.ALT) + 1):
                 ad = ad[1:]
