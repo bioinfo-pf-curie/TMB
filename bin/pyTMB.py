@@ -498,10 +498,10 @@ if __name__ == "__main__":
                     if not args.debug:
                         continue
 
-        except:
+        except Exception:
             warnflag = str(variant.CHROM) + ":" + str(variant.start) + "-" + str(variant.end)
-            warnings.warn("Warning : variant {} raises an error. Skipped so far ...".format(warnflag))
-            raise
+            warnings.warn("Warning : variant {} raises an error. Skipping.".format(warnflag))
+            continue
 
         # Still alive
         if debugInfo == "":
