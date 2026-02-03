@@ -358,6 +358,24 @@ if __name__ == "__main__":
     varCounter = 0
     varNI = 0
     varTMB = 0
+
+    # Filter statistics counters
+    filterStats = {
+        'INDEL': 0,
+        'QUAL': 0,
+        'VAF': 0,
+        'DEPTH': 0,
+        'ALTDEPTH': 0,
+        'CODING': 0,
+        'SPLICING': 0,
+        'NONCODING': 0,
+        'SYN': 0,
+        'NON_SYN': 0,
+        'HOTSPOT': 0,
+        'POLYM': 0,
+        'RUNREC': 0
+    }
+
     for variant in vcf:
         varCounter += 1
         if (varCounter % 1000 == 0 and args.verbose):
@@ -385,12 +403,14 @@ if __name__ == "__main__":
             # Indels
             if args.filterIndels and variant.is_indel:
                 debugInfo = ",".join([debugInfo, "INDEL"])
+                filterStats['INDEL'] += 1
                 if not args.debug:
                     continue
 
             # Variant has a QUAL value or not PASS in the FILTER column
             if args.filterLowQual and variant.FILTER is not None:
                 debugInfo = ",".join([debugInfo, "QUAL"])
+                filterStats['QUAL'] += 1
                 if not args.debug:
                     continue
 
@@ -402,6 +422,7 @@ if __name__ == "__main__":
             fval = getTag(variant, callerFlags['freq'])
             if fval is not None and len(fval[fval < args.vaf]) == len(variant.ALT):
                 debugInfo = ",".join([debugInfo, "VAF"])
+                filterStats['VAF'] += 1
                 if not args.debug:
                     continue
 
@@ -409,17 +430,19 @@ if __name__ == "__main__":
             dval = getTag(variant, callerFlags['depth'])
             if dval is not None and len(dval[dval < args.minDepth]) == len(variant.ALT):
                 debugInfo = ",".join([debugInfo, "DEPTH"])
+                filterStats['DEPTH'] += 1
                 if not args.debug:
                     continue
 
             # Alternative allele Depth
-            ad = getTag(variant, callerFlags['altDepth']).flatten()           
+            ad = getTag(variant, callerFlags['altDepth']).flatten()
             # If AD = REF + ALTs, remove the first (REF) value
             if len(ad) == (len(variant.ALT) + 1):
                 ad = ad[1:]
 
             if ad is not None and len(ad[ad < args.minAltDepth]) == len(variant.ALT):
                 debugInfo = ",".join([debugInfo, "ALTDEPTH"])
+                filterStats['ALTDEPTH'] += 1
                 if not args.debug:
                     continue
 
@@ -431,12 +454,14 @@ if __name__ == "__main__":
             if args.filterCoding and isAnnotatedAs(variant, infos=annotInfo, flags=dbFlags['isCoding'], sep=dbFlags['sep']):
                 if not isAnnotatedAs(variant, infos=annotInfo, flags=dbFlags['isNonCoding'], sep=dbFlags['sep']):
                     debugInfo = ",".join([debugInfo, "CODING"])
+                    filterStats['CODING'] += 1
                     if not args.debug:
                         continue
 
             # Splice variants
             if args.filterSplice and isAnnotatedAs(variant, infos=annotInfo, flags=dbFlags['isSplicing'], sep=dbFlags['sep']):
                 debugInfo = ",".join([debugInfo, "SPLICING"])
+                filterStats['SPLICING'] += 1
                 if not args.debug:
                     continue
 
@@ -444,6 +469,7 @@ if __name__ == "__main__":
             if args.filterNonCoding and isAnnotatedAs(variant, infos=annotInfo, flags=dbFlags['isNonCoding'], sep=dbFlags['sep']):
                 if not isAnnotatedAs(variant, infos=annotInfo, flags=dbFlags['isCoding'], sep=dbFlags['sep']):
                     debugInfo = ",".join([debugInfo, "NONCODING"])
+                    filterStats['NONCODING'] += 1
                     if not args.debug:
                         continue
 
@@ -451,6 +477,7 @@ if __name__ == "__main__":
             if args.filterSyn and isAnnotatedAs(variant, infos=annotInfo, flags=dbFlags['isSynonymous'], sep=dbFlags['sep']):
                 if not isAnnotatedAs(variant, infos=annotInfo, flags=dbFlags['isNonSynonymous'], sep=dbFlags['sep']):
                     debugInfo = ",".join([debugInfo, "SYN"])
+                    filterStats['SYN'] += 1
                     if not args.debug:
                         continue
 
@@ -458,6 +485,7 @@ if __name__ == "__main__":
             if args.filterNonSyn and isAnnotatedAs(variant, infos=annotInfo, flags=dbFlags['isNonSynonymous'], sep=dbFlags['sep']):
                 if not isAnnotatedAs(variant, infos=annotInfo, flags=dbFlags['isSynonymous'], sep=dbFlags['sep']):
                     debugInfo = ",".join([debugInfo, "NON_SYN"])
+                    filterStats['NON_SYN'] += 1
                     if not args.debug:
                         continue
 
@@ -471,6 +499,7 @@ if __name__ == "__main__":
 
                 if isCancerHotspot(variant, infos=dbInfo, flags=fdb):
                     debugInfo = ",".join([debugInfo, "HOTSPOT"])
+                    filterStats['HOTSPOT'] += 1
                     if not args.debug:
                         continue
 
@@ -484,6 +513,7 @@ if __name__ == "__main__":
 
                 if isPolym(variant, infos=dbInfo, flags=fdb, val=args.maf):
                     debugInfo = ",".join([debugInfo, "POLYM"])
+                    filterStats['POLYM'] += 1
                     if not args.debug:
                         continue
 
@@ -491,6 +521,7 @@ if __name__ == "__main__":
             if args.filterRecurrence:
                 if isPolym(variant, infos=dbInfo, flags=dbFlags['recurrence']['run'], val=0):
                     debugInfo = ",".join([debugInfo, "RUNREC"])
+                    filterStats['RUNREC'] += 1
                     if not args.debug:
                         continue
 
@@ -548,6 +579,13 @@ if __name__ == "__main__":
     print("filterNonSyn=", args.filterNonSyn)
     print("filterCancerHotspot=", args.filterCancerHotspot)
     print("filterPolym=", args.filterPolym)
+    print("")
+    print("Filter statistics:")
+    print("------------------")
+    for filt, count in filterStats.items():
+        if count > 0:
+            pct = round(100.0 * count / varCounter, 2) if varCounter > 0 else 0
+            print(f"  {filt}= {count} ({pct}%)")
     print("")
     print("Total number of variants=", varCounter)
     print("Non-informative variants=", varNI)
