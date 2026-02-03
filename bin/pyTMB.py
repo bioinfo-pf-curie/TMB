@@ -228,12 +228,12 @@ Return a 2D numpy array
 def getTag(v, tag):
 
     # First check in FORMAT field
-    if tag in variant.FORMAT:
-        val = variant.format(tag)
+    if tag in v.FORMAT:
+        val = v.format(tag)
 
     # Otherwise, check in INFO field
-    if tag not in variant.FORMAT or val is None:
-        val = variant.INFO.get(tag)
+    if tag not in v.FORMAT or val is None:
+        val = v.INFO.get(tag)
 
     if type(val) != np.ndarray:
         val = np.array([val], float)
@@ -342,6 +342,10 @@ if __name__ == "__main__":
             sys.exit(-1)
     else:
         effGS = args.effGenomeSize
+
+    if effGS == 0:
+        sys.stderr.write("Error: Effective genome size is 0. Check BED file.\n")
+        sys.exit(-1)
 
     # VAF
     if args.vaf > int(callerFlags['maxVaf']):
@@ -494,10 +498,10 @@ if __name__ == "__main__":
                     if not args.debug:
                         continue
 
-        except:
+        except Exception:
             warnflag = str(variant.CHROM) + ":" + str(variant.start) + "-" + str(variant.end)
-            warnings.warn("Warning : variant {} raises an error. Skipped so far ...".format(warnflag))
-            raise
+            warnings.warn("Warning : variant {} raises an error. Skipping.".format(warnflag))
+            continue
 
         # Still alive
         if debugInfo == "":
