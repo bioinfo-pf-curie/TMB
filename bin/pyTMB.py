@@ -343,6 +343,17 @@ if __name__ == "__main__":
         print("Error: --maf must be < 1 !")
         sys.exit(-1)
 
+    # Pre-compute database field lists (avoid rebuilding per-variant)
+    cancer_fields = []
+    if args.filterCancerHotspot:
+        for db in args.cancerDb.split(','):
+            cancer_fields.extend(dbFlags['cancerDb'][db])
+
+    polym_fields = []
+    if args.filterPolym:
+        for db in args.polymDb.split(','):
+            polym_fields.extend(dbFlags['polymDb'][db])
+
     varCounter = 0
     varNI = 0
     varTMB = 0
@@ -479,13 +490,7 @@ if __name__ == "__main__":
 
             # Hotspot
             if args.filterCancerHotspot:
-                # Flatten list of fields
-                fdb = []
-                for db in args.cancerDb.split(','):
-                    for x in dbFlags['cancerDb'][db]:
-                        fdb.append(x)
-
-                if isCancerHotspot(variant, infos=dbInfo, flags=fdb):
+                if isCancerHotspot(variant, infos=dbInfo, flags=cancer_fields):
                     debugInfo = ",".join([debugInfo, "HOTSPOT"])
                     filterStats['HOTSPOT'] += 1
                     if not args.debug:
@@ -493,13 +498,7 @@ if __name__ == "__main__":
 
             # Polymorphisms
             if args.filterPolym:
-                # Flatten list of fields
-                fdb = []
-                for db in args.polymDb.split(','):
-                    for x in dbFlags['polymDb'][db]:
-                        fdb.append(x)
-
-                if isPolym(variant, infos=dbInfo, flags=fdb, val=args.maf):
+                if isPolym(variant, infos=dbInfo, flags=polym_fields, val=args.maf):
                     debugInfo = ",".join([debugInfo, "POLYM"])
                     filterStats['POLYM'] += 1
                     if not args.debug:
