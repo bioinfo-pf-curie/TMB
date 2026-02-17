@@ -355,8 +355,8 @@ if __name__ == "__main__":
     # Warning filterPolym & MAF:
     if args.polymDb and not args.filterPolym:
         print("Warning: --filterPolym argument not provided while --polymDb is specified !")
-    if args.polymDb and args.filterPolym and not args.maf:
-        print("Error: --maf argument not provided !")
+    if args.polymDb and args.filterPolym and args.maf >= 1:
+        print("Error: --maf must be < 1 !")
         sys.exit(-1)
 
     varCounter = 0
