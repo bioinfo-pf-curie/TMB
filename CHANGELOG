@@ -3,7 +3,8 @@ version-1.6.0
 
 NEW FEATURES
 
-  - The --export parameter now takes a path with the output vcf file #34
+   - Refactoring as python package #42
+   - The --export parameter now takes a path with the output vcf file #34
 
 BIG FIXES
 
