@@ -411,6 +411,15 @@ This pipeline has been written by the bioinformatics core facility in close coll
 If you are using this tool for your own research, please cite:  
 Dupain, C., Gutman, T., Girard, E. et al. *Tumor mutational burden assessment and standardized bioinformatics approach using custom NGS panels in clinical routine.* BMC Biol 22, 43 (2024). https://doi.org/10.1186/s12915-024-01839-8
 
+## AI Disclosure: Augmented
+
+This project is **AI-augmented** and utilized AI (e.g., Claude) to:
+* **Generate** boilerplate code and specific utility functions.
+* **Refactor** existing code for better performance and readability.
+* **Draft** unit tests and technical documentation.
+
+**Verification:** Every AI-generated contribution was manually reviewed, debugged, and integrated into the final codebase.
+
 ## Contacts
 
 For any question, bug or suggestion, please use the issues system or contact the bioinformatics core facility.
