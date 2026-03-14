@@ -1,6 +1,10 @@
 *************************************
 version-1.6.0
 
+NEW FEATURES
+
+  - The --export parameter now takes a path with the output vcf file #34
+
 BIG FIXES
 
    - Fix division by zero when effective genome size is 0 #35

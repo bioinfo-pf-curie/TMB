@@ -271,7 +271,7 @@ def argsParse():
     # Others
     parser.add_argument("--verbose", help="Active verbose mode", action="store_true")
     parser.add_argument("--debug", help="Export original VCF with TMB_FILTER tag", action="store_true")
-    parser.add_argument("--export", help="Export a VCF with the considered variants", action="store_true")
+    parser.add_argument("--export", help="Export a VCF with the considered variants to the specified path", type=str, default=None)
     parser.add_argument("--version", help="Version number", action='version', version="%(prog)s ("+__version__+")")
 
     args = parser.parse_args()
@@ -298,9 +298,8 @@ if __name__ == "__main__":
         sys.exit(-1)
 
     # Outputs
-    if args.export:
-        wx = cyvcf2.Writer(re.sub(r'\.vcf$|\.vcf.gz$|\.bcf',
-                                  '_export.vcf.gz', os.path.basename(args.vcf)), vcf, mode="wz")
+    if args.export is not None:
+        wx = cyvcf2.Writer(args.export, vcf, mode="wz")
     if args.debug:
         vcf.add_info_to_header({'ID': 'TMB_FILTERS', 'Description': 'Detected filters for TMB calculation',
                                 'Type': 'Character', 'Number': '1'})
