@@ -283,13 +283,14 @@ if __name__ == "__main__":
     args = argsParse()
 
     # Load Data
-    vcf = cyvcf2.VCF(args.vcf)
     if args.sample is not None:
         if args.sample not in vcf.samples:
             sys.stderr.write(f"Error: Sample '{args.sample}' not found in VCF\n")
             sys.exit(-1)
         vcf = cyvcf2.VCF(args.vcf, samples=args.sample)
-
+    else:
+        vcf = cyvcf2.VCF(args.vcf)
+    
     # Sample name
     if len(vcf.samples) > 1:
         sys.stderr.write("Error: " + str(len(vcf.samples)) +
