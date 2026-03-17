@@ -3,7 +3,8 @@ version-1.6.0
 
 NEW FEATURES
 
-  - The --export parameter now takes a path with the output vcf file #34
+   - Refactoring as python package #42
+   - The --export parameter now takes a path with the output vcf file #34
 
 BIG FIXES
 
@@ -29,7 +30,7 @@ SIGNIFICANT USER CHANGES
 
 BUG FIXES
 
-   - filterLowQual is not only based on the FILTER column. Only PASS variants are reported #21
+   - filterLowQual is now only based on the FILTER column. Only PASS variants are reported #21
    - fix bug with multi-allele freqs #25
 
 *************************************

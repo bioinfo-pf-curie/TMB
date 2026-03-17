@@ -29,6 +29,9 @@ Variants after filters= 769
 Effective Genome Size= 33280000
 
 TMB= 23.11
+
+######################################
+
 pyTMB version= 1.5.0
 When= 2025-07-30
 
@@ -60,6 +63,9 @@ Variants after filters= 434
 Effective Genome Size= 33280000
 
 TMB= 13.04
+
+######################################
+
 pyTMB version= 1.5.0
 When= 2025-07-30
 
@@ -91,6 +97,9 @@ Variants after filters= 46
 Effective Genome Size= 33280000
 
 TMB= 1.38
+
+##############################
+
 pyTMB version= 1.5.0
 When= 2025-07-30
 
@@ -115,6 +124,130 @@ filterSyn= True
 filterNonSyn= False
 filterConcerHostpot= False
 filterPolym= True
+
+Total number of variants= 3828
+Non-informative variants= 0
+Variants after filters= 769
+Effective Genome Size= 33280000
+
+TMB= 23.11
+
+######################################
+
+pyTMB version= 1.6.0
+When= 2026-03-17
+
+Input= head_vcf_seqOIA.vcf.gz
+Sample= None
+
+Config caller= ../../config/mutect2.yml
+Config databases= ../../config/annovar_102015.yml
+
+Filters:
+-------
+VAF= 0.05
+MAF= 0.001
+minDepth= 20
+minAltDepth= 2
+filterLowQual= True
+filterIndels= False
+filterCoding= False
+filterNonCoding= True
+filterSplice= False
+filterSyn= True
+filterNonSyn= False
+filterCancerHotspot= False
+filterPolym= True
+
+Filter statistics:
+------------------
+  QUAL= 41 (7.95%)
+  VAF= 40 (7.75%)
+  DEPTH= 1 (0.19%)
+
+Total number of variants= 516
+Non-informative variants= 0
+Variants after filters= 434
+Effective Genome Size= 33280000
+
+TMB= 13.04
+
+######################################
+
+pyTMB version= 1.6.0
+When= 2026-03-17
+
+Input= test1_mutect2_snpeff.vcf.gz
+Sample= None
+
+Config caller= ../../config/mutect2.yml
+Config databases= ../../config/annovar_102015.yml
+
+Filters:
+-------
+VAF= 0.05
+MAF= 0.001
+minDepth= 20
+minAltDepth= 2
+filterLowQual= True
+filterIndels= False
+filterCoding= False
+filterNonCoding= True
+filterSplice= False
+filterSyn= True
+filterNonSyn= False
+filterCancerHotspot= False
+filterPolym= True
+
+Filter statistics:
+------------------
+  QUAL= 1029 (88.55%)
+  VAF= 32 (2.75%)
+  NONCODING= 38 (3.27%)
+  SYN= 15 (1.29%)
+  POLYM= 2 (0.17%)
+
+Total number of variants= 1162
+Non-informative variants= 0
+Variants after filters= 46
+Effective Genome Size= 33280000
+
+TMB= 1.38
+
+######################################
+
+pyTMB version= 1.6.0
+When= 2026-03-17
+
+Input= test2_mutect2_snpeff.vcf.gz
+Sample= None
+
+Config caller= ../../config/mutect2.yml
+Config databases= ../../config/annovar_102015.yml
+
+Filters:
+-------
+VAF= 0.05
+MAF= 0.001
+minDepth= 20
+minAltDepth= 2
+filterLowQual= True
+filterIndels= False
+filterCoding= False
+filterNonCoding= True
+filterSplice= False
+filterSyn= True
+filterNonSyn= False
+filterCancerHotspot= False
+filterPolym= True
+
+Filter statistics:
+------------------
+  QUAL= 2092 (54.65%)
+  VAF= 55 (1.44%)
+  NONCODING= 674 (17.61%)
+  SYN= 234 (6.11%)
+  POLYM= 4 (0.1%)
 
 Total number of variants= 3828
 Non-informative variants= 0

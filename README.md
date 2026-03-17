@@ -3,7 +3,8 @@
 **Institut Curie - TMB analysis**
 
 [![run with conda](http://img.shields.io/badge/run%20with-conda-3EB049?labelColor=000000&logo=anaconda)](https://docs.conda.io/en/latest/)
-
+[![Python 3.9+](https://img.shields.io/badge/python-3.9+-blue.svg)](https://www.python.org/downloads/)
+[![Version](https://img.shields.io/badge/version-1.6.0-green.svg)](CHANGELOG)
 
 This tool was designed to calculate a **Tumor Mutational Burden (TMB)** score from a VCF file.
 
@@ -11,351 +12,414 @@ The TMB is usually defined as the total number of non-synonymous mutations per c
 
 Currently, the main limitation of TMB calculation is the lack of standard for its calculation. Therefore, we decided to propose a very **versatile** tool allowing the user to define exactly which type of variants to use or filter.
 
+---
+
 ## Tool summary
 
-### Installation with recipe
+### Installation
 
-The tool was implemented in `python3`, and require the librairies `cyvcf2` and `yaml`.  
-We provide a `conda` file to build a simple python environment.  
-To do so, simply use:
+#### Option 1 — conda environment + pip (recommended)
+
+```bash
+# 1. Create and activate the conda environment
+conda env create -f environment.yml
+conda activate pyTMB_new
+
+# 2. Install the package (regular)
+pip install .
+
+# 3. Or install in editable / development mode
+pip install -e .
+
+# 4. To also enable pyEffGenomeSize (requires pybedtools + pandas)
+pip install -e ".[effgenomesize]"
+```
+
+After installation two CLI commands are available directly in your `$PATH`:
 
 ```
-conda env create -n pytmb -f environment.yml
-conda activate pytmb
+pyTMB
+pyEffGenomeSize
 ```
 
-### Installation with conda
+#### Option 2 — conda only (pre-built bioconda package)
 
-If you are using conda as described above, you can install pyTMB from the `bioconda` channel as follows:
-
-```
+```bash
 conda env create -n pytmb
 conda activate pytmb
-conda install -c bioconda -c conda-forge tmb=1.5.0
+conda install -c bioconda -c conda-forge tmb=1.6.0
+```
+
+#### Option 3 — run scripts directly (backward-compatible shims)
+
+The `bin/` directory still contains thin wrapper scripts that delegate to the
+installed package.  After installing with `pip install .` you can still call:
+
+```bash
+python bin/pyTMB.py [options]
+python bin/pyEffGenomeSize.py [options]
 ```
 
 ### Recommendations
 
 In order to have homogenous VCF entry files and to avoid VCF ambiguities, we recommend to normalize the VCF files before calculating the TMB. This is especially useful if the VCF file contains Multi Nucleotide Variants (MNVs) or multiallelic variants.
 
-For that we suggest to use
-
-```
+```bash
 bcftools norm -f FASTA -m- -o file_norm.vcf file
 ```
 
 ### Implementation
 
-The idea behind this script is quite simple. All variants are scanned and filtered according to the criteria provided by the user. If a variant passes all the filters, it is therefore used for the TMB calculation. In other words, if no filters are provided, the script will simply count the number of variants.
+The idea behind this tool is quite simple. All variants are scanned and filtered according to the criteria provided by the user. If a variant passes all the filters, it is therefore used for the TMB calculation. In other words, if no filters are provided, the tool will simply count the number of variants.
 
 The TMB is defined as the number of variants over the size of the genomic region (in Mb).  
-To calculate the size of the genome (ie. the `effectiveGenomeSize`), the user can provide a BED file (`--bed`) with the design of the assay.  
-This BED file should be ordered, 0 based and with no header.  
-Another alternative is to specify the size of genomic regions using `--effGenomeSize`.  
-Importantly, **this is the user responsability to provide the BED corresponding to the vcf input file.**  
+To calculate the effective genome size, the user can provide a BED file (`--bed`) with the design of the assay.  
+This BED file should be ordered, 0-based and with no header.  
+Another alternative is to specify the size directly using `--effGenomeSize`.  
+Importantly, **it is the user's responsibility to provide the BED corresponding to the VCF input file.**
 
-Of note, we also provide the `pyEffGenomicSize.py` script to calculate the effective size from a BAM file using  annotations, coverage and mapping quality thresholds defined by the user. This script is under development and was not yet validated ! Run it with caution.
+We also provide the `pyEffGenomeSize` command to calculate the effective size from a BAM file using annotations, coverage and mapping quality thresholds defined by the user. This tool is under development and was not yet validated — use it with caution.
 
+---
+
+## Package structure
+
+Since version 1.6.0, the code is organized as an installable Python package:
+
+```
+pytmb/
+├── __init__.py           # version + public API
+├── config.py             # loadConfig()
+├── vcf_utils.py          # getTag(), getMultiAlleleHeader()
+├── genome_size.py        # getEffGenomeSizeFromBed(), getEffGenomeSizeFromMosdepth()
+├── filters.py            # isAnnotatedAs(), isPolym(), isCancerHotspot(), …
+├── tmb.py                # calculate_tmb() — importable library function
+└── cli/
+    ├── run_tmb.py        # pyTMB entry point
+    └── run_effgenomesize.py  # pyEffGenomeSize entry point
+```
+
+The core `calculate_tmb()` function can also be used programmatically:
+
+```python
+from pytmb import calculate_tmb, loadConfig
+
+db_flags     = loadConfig("config/snpeff.yml")
+caller_flags = loadConfig("config/mutect2.yml")
+
+results = calculate_tmb(
+    vcf_path="sample.vcf.gz",
+    db_flags=db_flags,
+    caller_flags=caller_flags,
+    eff_genome_size=33_280_000,
+    vaf=0.05,
+    maf=0.001,
+    min_depth=20,
+    min_alt_depth=2,
+    filter_low_qual=True,
+    filter_non_coding=True,
+    filter_syn=True,
+    filter_polym=True,
+    polym_db="1k,gnomad",
+)
+print("TMB =", results["tmb"])
+```
+
+---
 
 ## Quick help
 
 ```bash
-python bin/pyTMB.py -h
+pyTMB -h
 
-usage: pyTMB.py [-h] -i VCF --dbConfig DBCONFIG --varConfig VARCONFIG
-                [--sample SAMPLE] [--effGenomeSize EFFGENOMESIZE] [--bed BED]
-                [--vaf VAF] [--maf MAF] [--minDepth MINDEPTH]
-                [--minAltDepth MINALTDEPTH] [--filterLowQual] [--filterIndels]
-                [--filterCoding] [--filterSplice] [--filterNonCoding]
-                [--filterSyn] [--filterNonSyn] [--filterCancerHotspot]
-                [--filterPolym] [--filterRecurrence] [--polymDb POLYMDB]
-                [--cancerDb CANCERDB] [--verbose] [--debug] [--export]
-                [--version]
+usage: pyTMB [-h] -i VCF --dbConfig DBCONFIG --varConfig VARCONFIG
+             [--sample SAMPLE] [--effGenomeSize EFFGENOMESIZE] [--bed BED]
+             [--vaf VAF] [--maf MAF] [--minDepth MINDEPTH]
+             [--minAltDepth MINALTDEPTH] [--filterLowQual] [--filterIndels]
+             [--filterCoding] [--filterSplice] [--filterNonCoding]
+             [--filterSyn] [--filterNonSyn] [--filterCancerHotspot]
+             [--filterPolym] [--filterRecurrence] [--polymDb POLYMDB]
+             [--cancerDb CANCERDB] [--verbose] [--debug] [--export EXPORT]
+             [--version]
 
-optional arguments:
+Calculate a Tumour Mutational Burden (TMB) score from a VCF file.
+
+options:
   -h, --help            show this help message and exit
-  -i VCF, --vcf VCF     Input file (.vcf, .vcf.gz, .bcf) (default: None)
-  --dbConfig DBCONFIG   Databases config file (default: None)
-  --varConfig VARCONFIG
-                        Variant calling config file (default: None)
+  -i VCF, --vcf VCF     Input file (.vcf, .vcf.gz, .bcf, .bcf.gz) (default: None)
+  --dbConfig DBCONFIG   Databases config file (YAML) (default: None)
+  --varConfig VARCONFIG Variant calling config file (YAML) (default: None)
   --sample SAMPLE       Specify the sample ID to focus on (default: None)
   --effGenomeSize EFFGENOMESIZE
-                        Effective genome size (default: None)
-  --bed BED             Capture design to use if effGenomeSize is not defined
-                        (BED file) (default: None)
-  --vaf VAF             Filter variants with Allelic Ratio <= vaf (default:0)
-  --maf MAF             Filter variants with MAF > maf (default:1)
-  --minDepth MINDEPTH   Filter variants with depth < minDepth (default:1)
+                        Effective genome size (bp) (default: None)
+  --bed BED             Capture design BED file (default: None)
+  --vaf VAF             Filter variants with Allelic Ratio < vaf (default: 0)
+  --maf MAF             Filter variants with MAF > maf (default: 1)
+  --minDepth MINDEPTH   Filter variants with depth < minDepth (default: 1)
   --minAltDepth MINALTDEPTH
-                        Filter variants with alternative allele depth <=minAltDepth (default:1)
-  --filterLowQual       Filter low quality (i.e not PASS) variant (default:False)
+                        Filter variants with alt-allele depth < minAltDepth (default: 1)
+  --filterLowQual       Filter low quality (not PASS) variants (default: False)
   --filterIndels        Filter insertions/deletions (default: False)
-  --filterCoding        Filter Coding variants (default: False)
-  --filterSplice        Filter Splice variants (default: False)
-  --filterNonCoding     Filter Non-coding variants (default: False)
-  --filterSyn           Filter Synonymous variants (default: False)
-  --filterNonSyn        Filter Non-Synonymous variants (default: False)
-  --filterCancerHotspot
-                        Filter variants annotated as cancer hotspots (default: False)
-  --filterPolym         Filter polymorphism variants in genome databases. See
-                        --maf (default: False)
-  --filterRecurrence    Filter on recurrence values (default: False)
-  --polymDb POLYMDB     Databases used for polymorphisms detection (comma separated) (default: gnomad)
-  --cancerDb CANCERDB   Databases used for cancer hotspot annotation (comma separated) (default: cosmic)
-  --verbose             Active verbose mode (default: False)
+  --filterCoding        Filter coding variants (default: False)
+  --filterSplice        Filter splice variants (default: False)
+  --filterNonCoding     Filter non-coding variants (default: False)
+  --filterSyn           Filter synonymous variants (default: False)
+  --filterNonSyn        Filter non-synonymous variants (default: False)
+  --filterCancerHotspot Filter variants annotated as cancer hotspots (default: False)
+  --filterPolym         Filter polymorphism variants (see --maf) (default: False)
+  --filterRecurrence    Filter on run-level recurrence values (default: False)
+  --polymDb POLYMDB     Databases for polymorphism detection, comma-separated (default: gnomad)
+  --cancerDb CANCERDB   Databases for cancer hotspot annotation, comma-separated (default: cosmic)
+  --verbose             Activate verbose mode (default: False)
   --debug               Export original VCF with TMB_FILTER tag (default: False)
-  --export              Export a VCF with the considered variants (default: False)
+  --export EXPORT       Export a VCF with passing variants to this path (default: None)
   --version             Version number
-
 ```
+
+---
+
 ## Configs
 
-Working with vcf files is usually not straighforward, and mainly depends on the variant caller and annotation tools/databases used.
-In order to make this tool as flexible as possible, we decided to set up **two configurations files** to defined which fields have to be checked and in which case.
+Working with VCF files is usually not straightforward, and mainly depends on the variant caller and annotation tools/databases used.
+In order to make this tool as flexible as possible, we set up **two configuration files** to define which fields have to be checked and in which case.
 
-The `--dbConfig` file described all details about annotation. As an exemple, we provide some configurations for **Annovar** (*config/annovar.yml*)
-and **snpEff** (*config/snpeff.yaml*) tool.  
+The `--dbConfig` file describes all details about annotation. We provide configurations for:
+- **Annovar** — `config/annovar.yml`
+- **snpEff** — `config/snpeff.yml`
+- **VEP** — `config/vep.yml`
+
 These files can be customized by the user.
 
-In the same way, all parameters which are variant caller specific can be set up in another config file using the `--varConfig` parameter.
-Config files for **Varscan2** (*config/varscan2.yml*) and **Mutect2** (*config/mutect2.yml*) are provided as examples.
+The `--varConfig` file contains all variant-caller-specific parameters. Config files for:
+- **Varscan2** — `config/varscan2.yml`
+- **Mutect2** — `config/mutect2.yml`
+- **Strelka** — `config/strelka.yml`
 
-The `yaml` config files must list the different **keys:values** for each function.
-As an exemple, to assess whether a variant is coding, the programm will used (for Annovar);
+are provided as examples.
 
-```
+The `yaml` config files list the different **key:values** for each function.
+For example, to assess whether a variant is coding (for Annovar):
+
+```yaml
 isCoding:
   Func.refGene:
-    - exonic			
+    - exonic
 ```
 
-It will therefore search in the `INFO` field the key `Func.refGene` and the value `exonic`.
+Regarding databases, the polymorphism fields for Annovar are:
 
-Regarding the databases, this is the same idea. Here is the list of databases, and fields used to check the `MAF` value by default (for Annovar) :
-
-```
+```yaml
 polymDb:
-    1k:
-      - 1000g2015aug_all
-    gnomad:
-      - gnomAD_exome_ALL
-    esp:
-      - esp6500siv2_all
-    exac:
-     - ExAC_ALL
+  1k:
+    - 1000g2015aug_all
+  gnomad:
+    - gnomAD_exome_ALL
+  esp:
+    - esp6500siv2_all
+  exac:
+    - ExAC_ALL
 ```
 
-The user can thus choose to scan all databases with the `--polymDb 1k,gnomad,esp,exac` parameter.  
-The same is true for the `--cancerDb` parameter.
+The user can then choose databases with `--polymDb 1k,gnomad,esp,exac`.  
+The same logic applies for `--cancerDb`.
+
+---
 
 ## Usage
 
-## `pyTMB.py`:
+### `pyTMB`
 
-### General parameters:
-#### `-i `
-Input file (.vcf, .vcf.gz, .bcf)
+#### General parameters
 
-#### `--sample`
-Specify the sample ID to focus on, required when dealing with multisample vcfs
+##### `-i`
+Input file (`.vcf`, `.vcf.gz`, `.bcf`, `.bcf.gz`)
 
-#### `--bed` and `--effGenomeSize`
-Specify either a sorted BED file with no header, or the size of the effective genome size to take in count.
+##### `--sample`
+Specify the sample ID to focus on. Required when dealing with multi-sample VCFs.
+
+##### `--bed` and `--effGenomeSize`
+Specify either a sorted BED file with no header, or the size of the effective genome directly.
 
 ### Filters
 
 #### `--vaf MINVAF`
-Filter variants with Allelic Ratio < minVAF. Note the field used to get the Allelic Ratio field is defined in the *config/caller.yml* file.
-In this case, the programm will first look for this information in the **FORMAT** field, and then in the **INFO** field.
+Filter variants with Allelic Ratio < minVAF. The field name is defined in `config/caller.yml`.
+The tool first checks the **FORMAT** field and then falls back to the **INFO** field.
 
 #### `--maf MAXMAF`
-Filter variants with MAF > maxMaf. Note the databases used to check the Min Allele Frequency are set using the `--polymDb`
-parameters and the *config/databases.yml* file.
+Filter variants with MAF > maxMAF. The databases to use are set with `--polymDb`
+and the `config/databases.yml` file.
 
 #### `--minDepth MINDEPTH`
-Filter variants with depth < minDepth. Note the field used to get the depth is defined in the *config/caller.yml* file.
-In this case, the programm will first look for this information in the **FORMAT** field, and then in the **INFO** field.
+Filter variants with depth < minDepth. The field name is defined in `config/caller.yml`.
+The tool first checks the **FORMAT** field and then falls back to the **INFO** field.
 
 #### `--minAltDepth MINALTDEPTH`
-FIlter alternative allele with depth < minAltDepth. The programm will look in the **FORMAT** field exclusively.
+Filter variants with alternative allele depth < minAltDepth. Checked in the **FORMAT** field.
 
 #### `--filterLowQual`
-Filter variants for which is the **FILTER** field is not **PASS** or for which the **QUAL** value is not null.
+Filter variants for which the **FILTER** field is not **PASS** or for which the **QUAL** value is not null.
 
-#### ` --filterIndels`
-Filter insertions/deletions variants.
+#### `--filterIndels`
+Filter insertion/deletion variants.
 
 #### `--filterCoding`
-Filter Coding variants as defined in the *config/databases.yml* field.
+Filter coding variants as defined in the `config/databases.yml` file.
 
 #### `--filterSplice`
-Filter Splice variants as defined in the *config/databases.yml* field.
+Filter splice variants as defined in the `config/databases.yml` file.
 
 #### `--filterNonCoding`
-Filter Non-coding variants as defined in the *config/databases.yml* field.
+Filter non-coding variants as defined in the `config/databases.yml` file.
 
 #### `--filterSyn`
-Filter Synonymous variants as defined in the *config/databases.yml* field.
+Filter synonymous variants as defined in the `config/databases.yml` file.
 
 #### `--filterNonSyn`
-Filter Non-Synonymous variants as defined in the *config/databases.yml* field.
+Filter non-synonymous variants as defined in the `config/databases.yml` file.
 
 #### `--filterCancerHotspot`
-Filter variants annotated as cancer hotspots as defined in the *config/databases.yml* field.
-So far, all variants with a 'cancer' annotation (for instance with a COSMIC Id) will be removed.
+Filter variants annotated as cancer hotspots as defined in the `config/databases.yml` file.
+All variants with a cancer annotation (e.g. a COSMIC ID) will be removed.
 
 #### `--filterPolym`
-Filter polymorphism variants from genome databases. The databases to considered can be listed with the `--polymDb` parameter.
-The fields to scan for each database are defined in the *config/databases.yml* file and the population frequency is compared with the `--maf` field.
+Filter polymorphism variants from genome databases. The databases can be listed with `--polymDb`.
+The fields to scan for each database are defined in `config/databases.yml` and the population
+frequency is compared against `--maf`.
 
 #### `--filterRecurrence`
-Filter on recurrence values (for instance, intra-run occurence). In this case, the vcf file must contains the recurrence information
-which can be defined the *config/databases.yml* file.
+Filter on run-level recurrence values. The VCF must already contain recurrence information
+as defined in the `config/databases.yml` file.
 
-## Outputs
+### Outputs
 
-By default, the script outputs a few information with the calculated TMB value.
+By default, the tool prints a summary with the calculated TMB value.
 
-#### `--export`
-
-This option allows to export a vcf file which only contains the variants used for TMB calculation.
+#### `--export PATH`
+Export a VCF file containing only the variants used for TMB calculation.
 
 #### `--debug`
+Export a VCF file with the tag **TMB_FILTERS** in the **INFO** field. This tag contains the
+reason why each variant would be filtered.
 
-The option allows to export a vcf file with the tag **TMB_FILTERS** in the **INFO** field. This tag therefore contains the reason for which a variant would be filtered.
+---
 
-## `pyEffGenomeSize.py`:
+### `pyEffGenomeSize`
 
-This tool is designed to calculate the effective genome size from a BAM file. This effective size is an important parameter of TMB calculation which can have a strong impact on the results. For instance, if only coding variants are used, it would make sense to use only the genomic size of coding region for the TMB calculation. So far, **this is the user responsability to provide an intial BED file with corresponding genomic features.** and to specify it to the `pyEffGenomeSize.py` script or directly to the `--bed` parameter. The user can also provide the size of the BED with the `--effGenomeSize` parameter.
-
-
+This tool calculates the effective genome size from a BAM file. This parameter has a strong
+impact on the TMB result. For instance, if only coding variants are used it makes sense to
+restrict the denominator to coding regions only.
 
 ```bash
-python3 pyEffGenomeSize.py -h
+pyEffGenomeSize -h
 
-usage: pyEffGenomeSize.py [-h] --bed BED --gtf GTF [--bam BAM] [--mosdepth]
-                          [--minCoverage MINCOVERAGE] [--minMapq MINMAPQ]
-                          [--filterNonCoding] [--filterCoding]
-                          [--featureTypes FEATURETYPES [FEATURETYPES ...]]
-                          [--saveIntermediates] [-t THREAD]
-                          [--oprefix OPREFIX] [--verbose] [--version]
-
-optional arguments:
-  -h, --help            show this help message and exit
-  --bed BED             BED file (.bed) (default: None)
-  --gtf GTF             GTF file for genome annotation (.gtf) (default: None)
-  --bam BAM             BAM file for mapping statistics (.bam) (default: None)
-  --mosdepth            enable mosdepth processing, require .bam file
-                        (default: False)
-  --minCoverage MINCOVERAGE
-                        minimum coverage of the region (default: 0)
-  --minMapq MINMAPQ     minimum coverage of the region (default: 0)
-  --filterNonCoding     Filter regions associated with non coding annotations
-                        (default: False)
-  --filterCoding        Filter regions associated with coding annotations
-                        (default: False)
-  --featureTypes FEATURETYPES [FEATURETYPES ...]
-                        List of Features (exon, gene, transcript, UTR, CDS) to
-                        keep (3rd column from gtf/gff). Required with
-                        --filterCoding argument (default: [])
-  --saveIntermediates   Save mosdepth intermediate files (default: False)
-  -t THREAD, --thread THREAD
-                        Number of threads for mosdepth run (default: 1)
-  --oprefix OPREFIX     Suffix for filtered bed (default: pyeffg)
-  --verbose             Active verbose mode (default: False)
-  --version             Version number
+usage: pyEffGenomeSize [-h] --bed BED --gtf GTF [--bam BAM] [--mosdepth]
+                       [--minCoverage MINCOVERAGE] [--minMapq MINMAPQ]
+                       [--filterNonCoding] [--filterCoding]
+                       [--featureTypes FEATURETYPES [FEATURETYPES ...]]
+                       [--saveIntermediates] [-t THREAD]
+                       [--oprefix OPREFIX] [--verbose] [--version]
 ```
 
+#### General parameters
 
-### General parameters:
+##### `--bed`
+The input BED file to filter. Should be 0-based, sorted, and with no header.
 
-#### `--bed`
-The input BED from to filter. This file should be 0 based, sorted and with no header
+##### `--gtf`
+A sorted GTF file for genome annotation (e.g. `gencode.v19.annotation.gtf`).
 
-#### `--gtf`
-A sorted gtf file to extract annotations from, for example gencode.v19.annotation.gtf
+##### `--bam`
+A BAM file from your experiment to extract mapping quality and coverage information.
 
-#### `--bam`
-A bam file from your experiment to extract mapping quality and coverage information
+##### `--mosdepth`
+Run mosdepth to extract regions with specific coverage and mapping quality.
+Optional, but requires `--bam`.
 
-#### `--mosdepth`
-To run mosdepth and extract regions with specific coverage and mapping quality. This is an optionnal parameters, but if used, it requires `--bam` parameter.
+#### Filters
 
-### Filters
+##### `--minCoverage`
+Minimum coverage per region of the BED file.
 
-#### `--minCoverage`
+##### `--minMapq`
+Mapping quality threshold. Reads below this value are ignored.
 
-Define the minimum coverage accepted for each region of the BED file
+##### `--filterNonCoding`
+Remove regions considered non-coding from the GTF/BED intersection to keep only exonic regions.
 
-#### `--minMapq`
+##### `--filterCoding`
+Remove regions considered coding based on the `transcript_type` field in the GTF.
+Requires `--featureTypes`.
 
-Mapping quality threshold. reads with a mapping quality less than this are ignored
+##### `--featureTypes`
+Choose one or more feature types from `exon`, `gene`, `transcript`, `UTR`, `CDS` to
+retain in the final BED file.
 
-#### `--filterNonCoding`
+---
 
-This filter removes regions considered as non coding from the gtf and BED files to only keep exonic regions.
-
-#### `--filterCoding`
-
-This filter removes regions considered as coding based on the transcript_type field in the gtf.
-This filter **requires** the parameter `featureTypes`
-
-#### `--featureTypes`
-
-This parameter offers the possibility to choose one or multiple features to select from the following ("exon", "gene", "transcript", "UTR", "CDS") to keep in the final BED file.
-
-## Usage and recommendations
-
-Here is a list of recommended parameters for different user cases.
+## Usage examples and recommendations
 
 ### Gene Panel
 
-Let's calculated the TMB on a gene panel vcf file (coding size = 1.59Mb, caller = varscan, annotation = Annovar) with the following criteria:
-- minDepth at 100X
-- non-synonymous
-- coding and splice
-- non polymorphism variants using 1K, gnomAD databases and a MAF of 0.001 (0.1%)
+Calculate the TMB on a gene panel VCF (coding size = 1.59 Mb, caller = Varscan2, annotation = Annovar)
+with the following criteria:
+- minDepth at 100×
+- non-synonymous, coding and splice variants only
+- polymorphisms filtered using 1K, gnomAD databases at MAF 0.001 (0.1%)
 
-In this case, a typical usage would be :
-
-```
-python pyTMB.py -i ${VCF} --effGenomeSize 1590000 \
---dbConfig config/annovar.yml \
---varConfig config/varscan.yml \
---maf 0.001 --minDepth 100 --minAltDepth 2\
---filterLowQual \
---filterNonCoding \
---filterSplice \
---filterSyn \
---filterPolym --polymDb 1k,gnomad \
---export > TMB_results.log
-```
-
-### Exome / Whole Genome Sequencing
-
-For WES, we recommend filtering low quality, non coding, synonymous, polymorphic variants. Here, indels and splicing variants are kept. For WES, an effective Genome size of 33Mb is used but a tailored size depending on the variants and regions is preferred.
-
-
-In the case of a WES variant calling using Mutect2 as variant caller and Snpeff as annotation tool, a typical usage would be :
-
-```
-python pyTMB.py -i ${VCF} --effGenomeSize 33280000 \
---dbConfig config/snpeff.yml \
---varConfig config/mutect2.yml \
---vaf 0.05 --maf 0.001 --minDepth 20 --minAltDepth 2 \
---filterLowQual \
---filterNonCoding \
---filterSyn \
---filterPolym --polymDb 1k,gnomad  > TMB_results.log
+```bash
+pyTMB -i ${VCF} \
+    --effGenomeSize 1590000 \
+    --dbConfig config/annovar.yml \
+    --varConfig config/varscan2.yml \
+    --maf 0.001 --minDepth 100 --minAltDepth 2 \
+    --filterLowQual \
+    --filterNonCoding \
+    --filterSplice \
+    --filterSyn \
+    --filterPolym --polymDb 1k,gnomad \
+    --export panel_tmb_variants.vcf.gz \
+    > TMB_results.log
 ```
 
-### Credits
+### Whole Exome Sequencing
 
-This pipeline has been written by the bioinformatics core facility in close collaboration with the Clinical Bioinformatics and the Genetics Service of the Institut Curie. Many thanks to the seqOIA-IT team for their help in the development and for the extensive testing of the tool !
+For WES, filter low-quality, non-coding, synonymous and polymorphic variants.
+Indels and splicing variants are kept. An effective genome size of 33 Mb is used.
 
-If you are using this tool for your own research, please cite ;  
+For Mutect2 + snpEff:
+
+```bash
+pyTMB -i ${VCF} \
+    --effGenomeSize 33280000 \
+    --dbConfig config/snpeff.yml \
+    --varConfig config/mutect2.yml \
+    --vaf 0.05 --maf 0.001 --minDepth 20 --minAltDepth 2 \
+    --filterLowQual \
+    --filterNonCoding \
+    --filterSyn \
+    --filterPolym --polymDb 1k,gnomad \
+    > TMB_results.log
+```
+
+---
+
+## Credits
+
+This pipeline has been written by the bioinformatics core facility in close collaboration with the Clinical Bioinformatics and the Genetics Service of the Institut Curie. Many thanks to the seqOIA-IT team for their help in the development and for the extensive testing of the tool!
+
+If you are using this tool for your own research, please cite:  
 Dupain, C., Gutman, T., Girard, E. et al. *Tumor mutational burden assessment and standardized bioinformatics approach using custom NGS panels in clinical routine.* BMC Biol 22, 43 (2024). https://doi.org/10.1186/s12915-024-01839-8
 
-### Contacts
+## AI Disclosure: Augmented
+
+This project is **AI-augmented** and utilized AI (e.g., Claude) to:
+* **Generate** boilerplate code and specific utility functions.
+* **Refactor** existing code for better performance and readability.
+* **Draft** unit tests and technical documentation.
+
+**Verification:** Every AI-generated contribution was manually reviewed, debugged, and integrated into the final codebase.
+
+## Contacts
 
 For any question, bug or suggestion, please use the issues system or contact the bioinformatics core facility.
