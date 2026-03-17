@@ -43,7 +43,7 @@ def getEffGenomeSizeFromBed(infile, verbose=False):
         On malformed input or missing file.
     """
     if verbose:
-        print(f"## Loading BED file '{infile}'...")
+        print(f"## File Name: {infile}")
 
     effgs = 0
     nline = 0
@@ -75,6 +75,9 @@ def getEffGenomeSizeFromBed(infile, verbose=False):
     except FileNotFoundError:
         sys.stderr.write(f"Error: file '{infile}' not found.\n")
         sys.exit(-1)
+
+    if verbose:
+        print(f"## Effective Genome Size = {effgs} bp")
 
     return effgs
 
@@ -146,6 +149,7 @@ def getEffGenomeSizeFromMosdepth(infile, use_mosdepth=False, verbose=False):
         print(f"## Total region size = {totgs}")
         if use_mosdepth:
             pct = round(effgs / totgs * 100, 3) if totgs > 0 else 0
-            print(f"## Callable region = {effgs} ({pct}%)\n")
+            print(f"## Callable region = {effgs} ({pct}%)")
+        print(f"## Effective Genome Size = {totgs if not use_mosdepth else effgs} bp\n")
 
     return effgs if use_mosdepth else totgs

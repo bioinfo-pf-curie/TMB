@@ -78,7 +78,7 @@ This BED file should be ordered, 0-based and with no header.
 Another alternative is to specify the size directly using `--effGenomeSize`.  
 Importantly, **it is the user's responsibility to provide the BED corresponding to the VCF input file.**
 
-We also provide the `pyEffGenomeSize` command to calculate the effective size from a BAM file using annotations, coverage and mapping quality thresholds defined by the user. This tool is under development and was not yet validated — use it with caution.
+We also provide the `pyEffGenomeSize` command to calculate the effective size from a BAM file using annotations, coverage and mapping quality thresholds defined by the user.
 
 ---
 

@@ -9,6 +9,7 @@ NEW FEATURES
 
 BIG FIXES
 
+   - Update pyEffGenomeSize to sort file and fix usage
    - Fix division by zero when effective genome size is 0 #35
    - Fix sys.stderr.write() incorrect signature in pyEffGenomeSize.py #36
    - Fix misleading exception handling that says skip but crashes #39
