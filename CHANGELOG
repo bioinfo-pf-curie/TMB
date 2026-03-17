@@ -5,6 +5,7 @@ NEW FEATURES
 
    - Refactoring as python package #42
    - The --export parameter now takes a path with the output vcf file #34
+   - Add gitlab CI and pytest environment
 
 BIG FIXES
 
