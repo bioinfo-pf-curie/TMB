@@ -28,6 +28,7 @@ import os.path
 from datetime import date
 
 import cyvcf2
+from scipy.stats import poisson
 
 from .vcf_utils import getTag
 from .filters import (
@@ -130,6 +131,8 @@ def calculate_tmb(
         A result dict with the following keys:
 
         * ``tmb`` – float, computed TMB (mutations / Mb)
+        * ``tmb_ci_low`` – float, lower bound of 95% Poisson confidence interval
+        * ``tmb_ci_high`` – float, upper bound of 95% Poisson confidence interval
         * ``var_counter`` – int, total variants seen
         * ``var_ni`` – int, variants skipped due to missing annotation
         * ``var_tmb`` – int, variants counted toward TMB
@@ -426,10 +429,22 @@ def calculate_tmb(
     # ------------------------------------------------------------------ #
     # Compute TMB                                                          #
     # ------------------------------------------------------------------ #
-    tmb = round(float(var_tmb) / (float(eff_genome_size) / 1e6), 2)
+    eff_gs_mb = float(eff_genome_size) / 1e6
+    if eff_gs_mb == 0:
+        sys.stderr.write("Error: Effective genome size is 0, cannot calculate TMB\n")
+        sys.exit(-1)
+    tmb = round(float(var_tmb) / eff_gs_mb, 2)
+
+    # Poisson confidence interval for variant count.
+    # When var_tmb == 0, poisson.interval returns (0.0, 0.0), so both CI bounds will be 0.
+    ci_low, ci_high = poisson.interval(confidence=0.95, mu=var_tmb)
+    tmb_ci_low = round(ci_low / eff_gs_mb, 2)
+    tmb_ci_high = round(ci_high / eff_gs_mb, 2)
 
     return {
         "tmb": tmb,
+        "tmb_ci_low": tmb_ci_low,
+        "tmb_ci_high": tmb_ci_high,
         "var_counter": var_counter,
         "var_ni": var_ni,
         "var_tmb": var_tmb,
@@ -496,3 +511,5 @@ def print_tmb_report(results, args, version):
     print("Effective Genome Size=", results["eff_genome_size"])
     print("")
     print("TMB=", results["tmb"])
+    print("TMB_95CI_low=", results["tmb_ci_low"])
+    print("TMB_95CI_high=", results["tmb_ci_high"])

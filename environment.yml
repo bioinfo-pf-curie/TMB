@@ -10,6 +10,7 @@ dependencies:
   - conda-forge::numpy>=1.21,<2
   - bioconda::cyvcf2=0.30.15
   - conda-forge::pyyaml=6.0
+  - conda-forge::scipy>=1.9
   - conda-forge::pandas>=1.3
   - bioconda::mosdepth=0.3.3
   - bioconda::pybedtools=0.9.0
