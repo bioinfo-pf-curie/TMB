@@ -6,8 +6,8 @@ build-backend = "setuptools.build_meta"
 # Project metadata
 # ---------------------------------------------------------------------------
 [project]
-name = "pytmb"
-version = "1.6.0"
+name = "pytmb-curie"
+version = "1.7.0dev"
 description = "Calculate a Tumour Mutational Burden (TMB) score from a VCF file."
 readme = "README.md"
 license = { file = "LICENSE" }
