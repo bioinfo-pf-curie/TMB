@@ -65,7 +65,7 @@ python bin/pyEffGenomeSize.py [options]
 In order to have homogenous VCF entry files and to avoid VCF ambiguities, we recommend to normalize the VCF files before calculating the TMB. This is especially useful if the VCF file contains Multi Nucleotide Variants (MNVs) or multiallelic variants.
 
 ```bash
-bcftools norm -f FASTA -m- -o file_norm.vcf file
+bcftools norm -f FASTA -m -o file_norm.vcf file
 ```
 
 ### Implementation
