@@ -4,7 +4,7 @@
 
 [![run with conda](http://img.shields.io/badge/run%20with-conda-3EB049?labelColor=000000&logo=anaconda)](https://docs.conda.io/en/latest/)
 [![Python 3.9+](https://img.shields.io/badge/python-3.9+-blue.svg)](https://www.python.org/downloads/)
-[![Version](https://img.shields.io/badge/version-1.7.0dev-green.svg)](CHANGELOG)
+[![Version](https://img.shields.io/badge/version-1.7.0-green.svg)](CHANGELOG)
 [![PyPI Package](https://img.shields.io/badge/PyPI-pytmb--curie-blue.svg)](https://pypi.org/project/pytmb-curie/)
 
 This tool was designed to calculate a **Tumor Mutational Burden (TMB)** score from a VCF file.
@@ -65,7 +65,7 @@ pyEffGenomeSize
 ```bash
 conda env create -n pytmb
 conda activate pytmb
-conda install -c bioconda -c conda-forge tmb=1.6.0
+conda install -c bioconda -c conda-forge tmb=1.7.0
 ```
 
 #### Option 4 — run scripts directly (backward-compatible shims)
