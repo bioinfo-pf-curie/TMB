@@ -43,7 +43,7 @@ def loadRec(infile):
     for line in handle:
         nline+=1
         bedtab = line.strip().split("\t")
-        if re.search("Recurrent", bedtab[108]):
+        if len(bedtab) > 108 and re.search("Recurrent", bedtab[108]):
             k=str(bedtab[2])+":"+str(bedtab[3])+"-"+str(bedtab[4])
             rec[k] = bedtab[107]
             nrec +=1

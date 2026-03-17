@@ -98,14 +98,14 @@ def getEffGenomeSizeFromMosdepth(infile):
                     chromosome, start, end, region, coverage = bedtab[:5]
                     effgs += int(coverage)
                 except ValueError:
-                    sys.stderr.write("Error : wrong input format in line", nline, ". Not a BED file !?")
+                    sys.stderr.write(f"Error: wrong input format in line {nline}. Not a BED file?\n")
                     sys.exit(-1)
 
             else:
                 try:
                     chromosome, start, end = bedtab[:3]
                 except ValueError:
-                    sys.stderr.write("Error : wrong input format in line", nline, ". Not a BED file !?")
+                    sys.stderr.write(f"Error: wrong input format in line {nline}. Not a BED file?\n")
                     sys.exit(-1)
 
             intl = abs(int(end) - int(start))
@@ -143,7 +143,7 @@ if __name__ == "__main__":
     for interval in myGtf:
         if 'transcript_type' not in interval.attrs:
             count += 1
-    if count & count > 0:
+    if count > 0:
         print("Warning: {} annotations not used because no transcript_type info".format(count))
 
     # Filtering step:

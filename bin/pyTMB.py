@@ -14,7 +14,7 @@
 #
 ##############################################################################
 
-__version__ = '1.5.0'
+__version__ = '1.6.0'
 
 """
 This script is designed to calculate a TMB score from a VCF file.
@@ -152,22 +152,6 @@ def isPolym(v, infos, flags, val):
     return(False)
 
 """
-Get MAF value
-"""
-
-def getMaf(v, infos, flags, val, maf_list):
-
-    subINFO = subsetINFO(infos, keys=flags)
-    for key in subINFO:
-        if type(subINFO[key]) is tuple:
-            for i in subINFO[key]:
-                if i is not None and i != ".":
-                    maf_list.append(i)
-        elif subINFO[key] is not None and subINFO[key] != "." and subINFO[key] != "NA":
-            maf_list.append(float(subINFO[key]))
-    return(maf_list)
-
-"""
 Check if a variant is annotated as a cancer hotspot
 """
 
@@ -228,12 +212,12 @@ Return a 2D numpy array
 def getTag(v, tag):
 
     # First check in FORMAT field
-    if tag in variant.FORMAT:
-        val = variant.format(tag)
+    if tag in v.FORMAT:
+        val = v.format(tag)
 
     # Otherwise, check in INFO field
-    if tag not in variant.FORMAT or val is None:
-        val = variant.INFO.get(tag)
+    if tag not in v.FORMAT or val is None:
+        val = v.INFO.get(tag)
 
     if type(val) != np.ndarray:
         val = np.array([val], float)
@@ -287,7 +271,7 @@ def argsParse():
     # Others
     parser.add_argument("--verbose", help="Active verbose mode", action="store_true")
     parser.add_argument("--debug", help="Export original VCF with TMB_FILTER tag", action="store_true")
-    parser.add_argument("--export", help="Export a VCF with the considered variants", action="store_true")
+    parser.add_argument("--export", help="Export a VCF with the considered variants to the specified path", type=str, default=None)
     parser.add_argument("--version", help="Version number", action='version', version="%(prog)s ("+__version__+")")
 
     args = parser.parse_args()
@@ -299,13 +283,14 @@ if __name__ == "__main__":
     args = argsParse()
 
     # Load Data
-    vcf = cyvcf2.VCF(args.vcf)
     if args.sample is not None:
         if args.sample not in vcf.samples:
             sys.stderr.write(f"Error: Sample '{args.sample}' not found in VCF\n")
             sys.exit(-1)
         vcf = cyvcf2.VCF(args.vcf, samples=args.sample)
-
+    else:
+        vcf = cyvcf2.VCF(args.vcf)
+    
     # Sample name
     if len(vcf.samples) > 1:
         sys.stderr.write("Error: " + str(len(vcf.samples)) +
@@ -313,9 +298,8 @@ if __name__ == "__main__":
         sys.exit(-1)
 
     # Outputs
-    if args.export:
-        wx = cyvcf2.Writer(re.sub(r'\.vcf$|\.vcf.gz$|\.bcf',
-                                  '_export.vcf.gz', os.path.basename(args.vcf)), vcf, mode="wz")
+    if args.export is not None:
+        wx = cyvcf2.Writer(args.export, vcf, mode="wz")
     if args.debug:
         vcf.add_info_to_header({'ID': 'TMB_FILTERS', 'Description': 'Detected filters for TMB calculation',
                                 'Type': 'Character', 'Number': '1'})
@@ -337,6 +321,10 @@ if __name__ == "__main__":
     else:
         effGS = args.effGenomeSize
 
+    if effGS == 0:
+        sys.stderr.write("Error: Effective genome size is 0. Check BED file.\n")
+        sys.exit(-1)
+
     # VAF
     if args.vaf > int(callerFlags['maxVaf']):
         sys.stderr.write("Error: vaf > maxVaf threshold. Check the configuration file.")
@@ -345,13 +333,42 @@ if __name__ == "__main__":
     # Warning filterPolym & MAF:
     if args.polymDb and not args.filterPolym:
         print("Warning: --filterPolym argument not provided while --polymDb is specified !")
-    if args.polymDb and args.filterPolym and not args.maf:
-        print("Error: --maf argument not provided !")
+    if args.polymDb and args.filterPolym and args.maf >= 1:
+        print("Error: --maf must be < 1 !")
         sys.exit(-1)
+
+    # Pre-compute database field lists (avoid rebuilding per-variant)
+    cancer_fields = []
+    if args.filterCancerHotspot:
+        for db in args.cancerDb.split(','):
+            cancer_fields.extend(dbFlags['cancerDb'][db])
+
+    polym_fields = []
+    if args.filterPolym:
+        for db in args.polymDb.split(','):
+            polym_fields.extend(dbFlags['polymDb'][db])
 
     varCounter = 0
     varNI = 0
     varTMB = 0
+
+    # Filter statistics counters
+    filterStats = {
+        'INDEL': 0,
+        'QUAL': 0,
+        'VAF': 0,
+        'DEPTH': 0,
+        'ALTDEPTH': 0,
+        'CODING': 0,
+        'SPLICING': 0,
+        'NONCODING': 0,
+        'SYN': 0,
+        'NON_SYN': 0,
+        'HOTSPOT': 0,
+        'POLYM': 0,
+        'RUNREC': 0
+    }
+
     for variant in vcf:
         varCounter += 1
         if (varCounter % 1000 == 0 and args.verbose):
@@ -379,12 +396,14 @@ if __name__ == "__main__":
             # Indels
             if args.filterIndels and variant.is_indel:
                 debugInfo = ",".join([debugInfo, "INDEL"])
+                filterStats['INDEL'] += 1
                 if not args.debug:
                     continue
 
             # Variant has a QUAL value or not PASS in the FILTER column
             if args.filterLowQual and variant.FILTER is not None:
                 debugInfo = ",".join([debugInfo, "QUAL"])
+                filterStats['QUAL'] += 1
                 if not args.debug:
                     continue
 
@@ -398,6 +417,7 @@ if __name__ == "__main__":
             fval = getTag(variant, callerFlags['freq'])
             if fval is not None and len(fval[fval < args.vaf]) == len(variant.ALT):
                 debugInfo = ",".join([debugInfo, "VAF"])
+                filterStats['VAF'] += 1
                 if not args.debug:
                     continue
 
@@ -406,6 +426,7 @@ if __name__ == "__main__":
             dval = getTag(variant, callerFlags['depth'])
             if dval is not None and len(dval[dval < args.minDepth]) == len(variant.ALT):
                 debugInfo = ",".join([debugInfo, "DEPTH"])
+                filterStats['DEPTH'] += 1
                 if not args.debug:
                     continue
 
@@ -418,6 +439,7 @@ if __name__ == "__main__":
 
             if ad is not None and len(ad[ad < args.minAltDepth]) == len(variant.ALT):
                 debugInfo = ",".join([debugInfo, "ALTDEPTH"])
+                filterStats['ALTDEPTH'] += 1
                 if not args.debug:
                     continue
 
@@ -429,12 +451,14 @@ if __name__ == "__main__":
             if args.filterCoding and isAnnotatedAs(variant, infos=annotInfo, flags=dbFlags['isCoding'], sep=dbFlags['sep']):
                 if not isAnnotatedAs(variant, infos=annotInfo, flags=dbFlags['isNonCoding'], sep=dbFlags['sep']):
                     debugInfo = ",".join([debugInfo, "CODING"])
+                    filterStats['CODING'] += 1
                     if not args.debug:
                         continue
 
             # Splice variants
             if args.filterSplice and isAnnotatedAs(variant, infos=annotInfo, flags=dbFlags['isSplicing'], sep=dbFlags['sep']):
                 debugInfo = ",".join([debugInfo, "SPLICING"])
+                filterStats['SPLICING'] += 1
                 if not args.debug:
                     continue
 
@@ -442,6 +466,7 @@ if __name__ == "__main__":
             if args.filterNonCoding and isAnnotatedAs(variant, infos=annotInfo, flags=dbFlags['isNonCoding'], sep=dbFlags['sep']):
                 if not isAnnotatedAs(variant, infos=annotInfo, flags=dbFlags['isCoding'], sep=dbFlags['sep']):
                     debugInfo = ",".join([debugInfo, "NONCODING"])
+                    filterStats['NONCODING'] += 1
                     if not args.debug:
                         continue
 
@@ -449,6 +474,7 @@ if __name__ == "__main__":
             if args.filterSyn and isAnnotatedAs(variant, infos=annotInfo, flags=dbFlags['isSynonymous'], sep=dbFlags['sep']):
                 if not isAnnotatedAs(variant, infos=annotInfo, flags=dbFlags['isNonSynonymous'], sep=dbFlags['sep']):
                     debugInfo = ",".join([debugInfo, "SYN"])
+                    filterStats['SYN'] += 1
                     if not args.debug:
                         continue
 
@@ -456,32 +482,23 @@ if __name__ == "__main__":
             if args.filterNonSyn and isAnnotatedAs(variant, infos=annotInfo, flags=dbFlags['isNonSynonymous'], sep=dbFlags['sep']):
                 if not isAnnotatedAs(variant, infos=annotInfo, flags=dbFlags['isSynonymous'], sep=dbFlags['sep']):
                     debugInfo = ",".join([debugInfo, "NON_SYN"])
+                    filterStats['NON_SYN'] += 1
                     if not args.debug:
                         continue
 
             # Hotspot
             if args.filterCancerHotspot:
-                # Flatten list of fields
-                fdb = []
-                for db in args.cancerDb.split(','):
-                    for x in dbFlags['cancerDb'][db]:
-                        fdb.append(x)
-
-                if isCancerHotspot(variant, infos=dbInfo, flags=fdb):
+                if isCancerHotspot(variant, infos=dbInfo, flags=cancer_fields):
                     debugInfo = ",".join([debugInfo, "HOTSPOT"])
+                    filterStats['HOTSPOT'] += 1
                     if not args.debug:
                         continue
 
             # Polymorphisms
             if args.filterPolym:
-                # Flatten list of fields
-                fdb = []
-                for db in args.polymDb.split(','):
-                    for x in dbFlags['polymDb'][db]:
-                        fdb.append(x)
-
-                if isPolym(variant, infos=dbInfo, flags=fdb, val=args.maf):
+                if isPolym(variant, infos=dbInfo, flags=polym_fields, val=args.maf):
                     debugInfo = ",".join([debugInfo, "POLYM"])
+                    filterStats['POLYM'] += 1
                     if not args.debug:
                         continue
 
@@ -489,13 +506,14 @@ if __name__ == "__main__":
             if args.filterRecurrence:
                 if isPolym(variant, infos=dbInfo, flags=dbFlags['recurrence']['run'], val=0):
                     debugInfo = ",".join([debugInfo, "RUNREC"])
+                    filterStats['RUNREC'] += 1
                     if not args.debug:
                         continue
 
-        except:
+        except Exception:
             warnflag = str(variant.CHROM) + ":" + str(variant.start) + "-" + str(variant.end)
-            warnings.warn("Warning : variant {} raises an error. Skipped so far ...".format(warnflag))
-            raise
+            warnings.warn("Warning : variant {} raises an error. Skipping.".format(warnflag))
+            continue
 
         # Still alive
         if debugInfo == "":
@@ -546,6 +564,13 @@ if __name__ == "__main__":
     print("filterNonSyn=", args.filterNonSyn)
     print("filterCancerHotspot=", args.filterCancerHotspot)
     print("filterPolym=", args.filterPolym)
+    print("")
+    print("Filter statistics:")
+    print("------------------")
+    for filt, count in filterStats.items():
+        if count > 0:
+            pct = round(100.0 * count / varCounter, 2) if varCounter > 0 else 0
+            print(f"  {filt}= {count} ({pct}%)")
     print("")
     print("Total number of variants=", varCounter)
     print("Non-informative variants=", varNI)
