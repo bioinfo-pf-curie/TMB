@@ -82,7 +82,7 @@ def getEffGenomeSizeFromBed(infile, verbose=False):
     return effgs
 
 
-def getEffGenomeSizeFromMosdepth(infile, use_mosdepth=False, verbose=False):
+def getEffGenomeSizeFromMosdepth(infile, use_mosdepth=False, verbose=False, total_region_size=None, callable_region_size=None):
     """
     Calculate the effective genome size from a mosdepth thresholds BED file
     (or a plain BED file).
@@ -100,11 +100,20 @@ def getEffGenomeSizeFromMosdepth(infile, use_mosdepth=False, verbose=False):
         Default is False.
     verbose : bool, optional
         Print summary statistics when True. Default is False.
+    total_region_size : int, optional
+        Total size of the original BED file. If not provided, will be
+        calculated from the input file.
+    callable_region_size : int, optional
+        Size after GTF filtering. If not provided and use_mosdepth is True,
+        will be calculated from the input file.
 
     Returns
     -------
-    int
-        Effective (callable) genome size.
+    dict
+        Dictionary containing:
+        - 'total_region_size': Total region size in bp
+        - 'callable_region_size': Callable region size in bp (after GTF filtering)
+        - 'effective_genome_size': Effective genome size in bp
 
     Raises
     ------
@@ -144,12 +153,32 @@ def getEffGenomeSizeFromMosdepth(infile, use_mosdepth=False, verbose=False):
             intl = abs(int(end) - int(start))
             totgs += intl
 
+    # Use provided values or calculated ones
+    if total_region_size is not None:
+        final_total = total_region_size
+    else:
+        final_total = totgs
+
+    if callable_region_size is not None:
+        final_callable = callable_region_size
+    elif use_mosdepth:
+        final_callable = totgs
+    else:
+        final_callable = totgs
+
+    if use_mosdepth:
+        final_effgs = effgs
+    else:
+        final_effgs = totgs
+
     if verbose:
         print(f"## File Name: {infile}")
-        print(f"## Total region size = {totgs}")
-        if use_mosdepth:
-            pct = round(effgs / totgs * 100, 3) if totgs > 0 else 0
-            print(f"## Callable region = {effgs} ({pct}%)")
-        print(f"## Effective Genome Size = {totgs if not use_mosdepth else effgs} bp\n")
+        print(f"## Total region size = {final_total} bp")
+        print(f"## Callable region size = {final_callable} bp")
+        print(f"## Effective Genome Size = {final_effgs} bp\n")
 
-    return effgs if use_mosdepth else totgs
+    return {
+        'total_region_size': final_total,
+        'callable_region_size': final_callable,
+        'effective_genome_size': final_effgs
+    }

@@ -55,12 +55,13 @@ class TestGetEffGenomeSizeFromBed:
 class TestGetEffGenomeSizeFromMosdepthPlain:
     def test_plain_bed_returns_sum(self, tmp_bed):
         bed = tmp_bed(["chr1\t0\t100", "chr2\t50\t200"])
-        assert getEffGenomeSizeFromMosdepth(bed, use_mosdepth=False) == 250
+        result = getEffGenomeSizeFromMosdepth(bed, use_mosdepth=False)
+        assert result['effective_genome_size'] == 250
 
     def test_verbose_does_not_crash(self, tmp_bed, capsys):
         bed = tmp_bed(["chr1\t0\t100"])
         result = getEffGenomeSizeFromMosdepth(bed, use_mosdepth=False, verbose=True)
-        assert result == 100
+        assert result['effective_genome_size'] == 100
         captured = capsys.readouterr()
         assert "Total region size" in captured.out
 
@@ -82,7 +83,8 @@ class TestGetEffGenomeSizeFromMosdepthMosdepth:
             tmp_path,
             ["chr1\t0\t100\tregion1\t80", "chr1\t100\t200\tregion2\t90"],
         )
-        assert getEffGenomeSizeFromMosdepth(bed, use_mosdepth=True) == 170
+        result = getEffGenomeSizeFromMosdepth(bed, use_mosdepth=True)
+        assert result['effective_genome_size'] == 170
 
     def test_verbose_shows_callable_region(self, tmp_path, capsys):
         bed = self._make_mosdepth_bed(
@@ -91,4 +93,4 @@ class TestGetEffGenomeSizeFromMosdepthMosdepth:
         )
         getEffGenomeSizeFromMosdepth(bed, use_mosdepth=True, verbose=True)
         captured = capsys.readouterr()
-        assert "Callable region" in captured.out
+        assert "Callable region size" in captured.out

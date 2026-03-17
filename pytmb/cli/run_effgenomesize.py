@@ -35,7 +35,7 @@ import sys
 import subprocess as sbp
 
 from pytmb import __version__
-from pytmb.genome_size import getEffGenomeSizeFromMosdepth
+from pytmb.genome_size import getEffGenomeSizeFromMosdepth, getEffGenomeSizeFromBed
 
 
 # ---------------------------------------------------------------------------
@@ -414,6 +414,18 @@ def main():
         df[1:].to_csv(intersect_path, sep="\t", index=False)
 
     # ------------------------------------------------------------------ #
+    # Calculate sizes                                                       #
+    # ------------------------------------------------------------------ #
+    # Total region size = size of original BED file
+    total_region_size = getEffGenomeSizeFromBed(args.bed)
+    
+    # Callable region size = size after GTF filtering
+    if filtered_gtf is not None:
+        callable_region_size = getEffGenomeSizeFromBed(intersect_path)
+    else:
+        callable_region_size = total_region_size
+
+    # ------------------------------------------------------------------ #
     # Mosdepth (when BAM is provided)                                       #
     # ------------------------------------------------------------------ #
     if args.bam:
@@ -437,6 +449,8 @@ def main():
             args.oprefix + ".thresholds.bed",
             use_mosdepth=True,
             verbose=True,
+            total_region_size=total_region_size,
+            callable_region_size=callable_region_size,
         )
 
         # Clean up mosdepth output files
@@ -460,12 +474,16 @@ def main():
                 args.bed,
                 use_mosdepth=False,
                 verbose=True,
+                total_region_size=total_region_size,
+                callable_region_size=callable_region_size,
             )
         else:
             getEffGenomeSizeFromMosdepth(
                 args.oprefix + ".intersect.bed",
                 use_mosdepth=False,
                 verbose=True,
+                total_region_size=total_region_size,
+                callable_region_size=callable_region_size,
             )
 
     # ------------------------------------------------------------------ #

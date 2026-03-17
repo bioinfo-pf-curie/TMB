@@ -313,7 +313,7 @@ restrict the denominator to coding regions only.
 ```bash
 pyEffGenomeSize -h
 
-usage: pyEffGenomeSize [-h] --bed BED --gtf GTF [--bam BAM] [--mosdepth]
+usage: pyEffGenomeSize [-h] --bed BED [--gtf GTF] [--bam BAM]
                        [--minCoverage MINCOVERAGE] [--minMapq MINMAPQ]
                        [--filterNonCoding] [--filterCoding]
                        [--featureTypes FEATURETYPES [FEATURETYPES ...]]
@@ -324,36 +324,51 @@ usage: pyEffGenomeSize [-h] --bed BED --gtf GTF [--bam BAM] [--mosdepth]
 #### General parameters
 
 ##### `--bed`
-The input BED file to filter. Should be 0-based, sorted, and with no header.
+The input BED file to filter. Should be 0-based, sorted, and with no header. **Required.**
 
 ##### `--gtf`
-A sorted GTF file for genome annotation (e.g. `gencode.v19.annotation.gtf`).
+A sorted GTF file for genome annotation (e.g. `gencode.v19.annotation.gtf` or `.gtf.gz`).
 
 ##### `--bam`
 A BAM file from your experiment to extract mapping quality and coverage information.
-
-##### `--mosdepth`
-Run mosdepth to extract regions with specific coverage and mapping quality.
-Optional, but requires `--bam`.
+When provided, mosdepth is automatically run to filter regions based on coverage and mapping quality.
 
 #### Filters
 
 ##### `--minCoverage`
-Minimum coverage per region of the BED file.
+Minimum coverage per region of the BED file. Requires `--bam`.
 
 ##### `--minMapq`
-Mapping quality threshold. Reads below this value are ignored.
+Mapping quality threshold. Reads below this value are ignored. Requires `--bam`.
 
 ##### `--filterNonCoding`
 Remove regions considered non-coding from the GTF/BED intersection to keep only exonic regions.
+Requires `--gtf`.
 
 ##### `--filterCoding`
 Remove regions considered coding based on the `transcript_type` field in the GTF.
-Requires `--featureTypes`.
+Requires `--gtf` and `--featureTypes`.
 
 ##### `--featureTypes`
 Choose one or more feature types from `exon`, `gene`, `transcript`, `UTR`, `CDS` to
-retain in the final BED file.
+retain in the final BED file. Default: `exon`. Required with `--filterCoding`.
+
+#### Output / Misc
+
+##### `--saveIntermediates`
+Keep intermediate files (mosdepth output, filtered GTF, intersect BED) instead of deleting them.
+
+##### `-t`, `--thread`
+Number of threads for mosdepth. Default: 1.
+
+##### `--oprefix`
+Output file prefix. Default: `pyeffg`.
+
+##### `--verbose`
+Activate verbose mode.
+
+##### `--version`
+Show version number.
 
 ---
 
