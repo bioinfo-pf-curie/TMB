@@ -12,6 +12,7 @@ for i in $(ls *vcf.gz); do
 	   --polymDb 1k,gnomad  \
 	   --dbConfig ../../config/annovar_102015.yml \
 	   --varConfig ../../config/mutect2.yml >> test.log
+    echo -e "\n######################################\n" >> test.log
     echo "ok"
 done
 

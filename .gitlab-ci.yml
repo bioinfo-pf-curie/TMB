@@ -1,0 +1,31 @@
+# GitLab CI configuration for pytmb
+# Runs pytest on merge requests to main branch
+
+stages:
+  - test
+
+# Default configuration for all jobs
+default:
+  image: python:3.9-slim
+  before_script:
+    - pip install --upgrade pip
+    - pip install -e .
+    - pip install -e ".[dev]"
+
+# Test job
+test:
+  stage: test
+  script:
+    - pytest -v --cov=pytmb --cov-report=term-missing
+  coverage: '/TOTAL.*\s+(\d+%)$/'
+  rules:
+    # Run on merge requests
+    - if: $CI_MERGE_REQUEST_IID
+    # Run on main branch pushes
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+  artifacts:
+    when: always
+    reports:
+      coverage_report:
+        coverage_format: cobertura
+        path: coverage.xml

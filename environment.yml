@@ -1,13 +1,19 @@
-# You can use this file to create a conda environment for this pipeline:
-#   conda env create -f environment.yml
-name: pyTMB_new
+name: pyTMB
 channels:
   - bioconda
   - conda-forge
-  - defaults
+  - nodefaults
 dependencies:
   - conda-forge::python=3.9.12
+  # cyvcf2 0.30.x is compiled against numpy 1.x – pin numpy below 2 to
+  # avoid the "numpy.dtype size changed" ABI incompatibility.
+  - conda-forge::numpy>=1.21,<2
   - bioconda::cyvcf2=0.30.15
   - conda-forge::pyyaml=6.0
+  - conda-forge::scipy>=1.9
+  - conda-forge::pandas>=1.3
   - bioconda::mosdepth=0.3.3
   - bioconda::pybedtools=0.9.0
+  # Development / testing tools
+  - conda-forge::pytest>=7
+  - conda-forge::pytest-cov
