@@ -4,7 +4,6 @@ Shared pytest fixtures for the pyTMB test suite.
 """
 
 import os
-import tempfile
 import pytest
 
 # ---------------------------------------------------------------------------
@@ -29,12 +28,6 @@ def config_dir(repo_root):
 def wes_dir(repo_root):
     """Path to the test/wes/ directory."""
     return os.path.join(repo_root, "test", "wes")
-
-
-@pytest.fixture(scope="session")
-def panel_dir(repo_root):
-    """Path to the test/panel/ directory."""
-    return os.path.join(repo_root, "test", "panel")
 
 
 @pytest.fixture(scope="session")
@@ -65,12 +58,6 @@ def vcf1(wes_dir):
 def vcf2(wes_dir):
     """Path to the second test WES VCF (Mutect2 + snpEff)."""
     return os.path.join(wes_dir, "test2_mutect2_snpeff.vcf.gz")
-
-
-@pytest.fixture(scope="session")
-def panel_bed(panel_dir):
-    """Path to the panel BED file."""
-    return os.path.join(panel_dir, "dragon_design_v2.bed")
 
 
 @pytest.fixture()

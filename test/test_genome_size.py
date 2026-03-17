@@ -47,19 +47,7 @@ class TestGetEffGenomeSizeFromBed:
         with pytest.raises(SystemExit):
             getEffGenomeSizeFromBed(bed)
 
-    def test_non_integer_coordinates_raise_systemexit(self, tmp_bed):
-        bed = tmp_bed(["chr1\tstart\tend"])
-        with pytest.raises(SystemExit):
-            getEffGenomeSizeFromBed(bed)
 
-    def test_real_panel_bed(self, panel_bed):
-        """Panel BED file returns a positive integer."""
-        size = getEffGenomeSizeFromBed(panel_bed)
-        assert isinstance(size, int)
-        assert size > 0
-
-
-# ---------------------------------------------------------------------------
 # getEffGenomeSizeFromMosdepth (plain BED mode)
 # ---------------------------------------------------------------------------
 

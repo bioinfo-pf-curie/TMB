@@ -30,7 +30,7 @@ SIGNIFICANT USER CHANGES
 
 BUG FIXES
 
-   - filterLowQual is not only based on the FILTER column. Only PASS variants are reported #21
+   - filterLowQual is now only based on the FILTER column. Only PASS variants are reported #21
    - fix bug with multi-allele freqs #25
 
 *************************************
