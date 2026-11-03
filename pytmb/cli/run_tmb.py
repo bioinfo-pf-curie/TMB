@@ -207,7 +207,7 @@ def argsParse():
         "--version",
         help="Version number",
         action="version",
-        version="%(prog)s (" + __version__ + ")",
+        version="%(prog)s " + __version__,
     )
 
     return parser.parse_args()
